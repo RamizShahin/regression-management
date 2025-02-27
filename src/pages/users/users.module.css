@@ -1,0 +1,116 @@
+.root{
+    padding: 50px 100px;
+    min-height: 100vh;
+    /* background-color: #0a1330; */
+    background-color: var(--primary-background);
+}
+.header{
+    /* width: 500px; */
+    margin-bottom: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.search-container {
+    display: flex;
+    width: 100%;
+    justify-content: start;
+    align-content: start;
+    align-items: center;
+}
+.label1 {
+    margin: 0px 1em 0px 0px;
+    font-size: 20px;
+}
+.search {
+    border: 1px solid var(--primary-border);
+    display: block;
+    background: no-repeat padding-box border-box 5px / 10% scroll
+        url(../../assets/search.svg);
+    background-color: #0b1739;
+    padding: 9px 4px 9px 40px;
+    margin: 0px;
+    width: 15em;
+    height: 2em;
+    color: #aeb9e1;
+    padding-top: 9px;
+}
+.btn-addUser {
+    padding: 0px;
+    width: 12em;
+    background-color: #cb3cff;
+    font-size: 13px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 20px;
+}
+.table {
+    /* width: 500px; */
+    border: 1px solid var(--primary-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.label2 {
+    margin: 0px 30px 0px 0px;
+    justify-content: start;
+    font-size: 25px;
+    border-bottom: 1px solid var(--primary-border);
+    padding: 20px;
+}
+table{
+    width: 100%;
+    color: white;
+    text-align: center;
+    border: none;
+}
+thead {
+    background-color: #0b1739;
+}
+th {
+    padding: 5px;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+}
+.trow:nth-of-type(odd) {
+    background-color: #0a1330;
+}
+.trow:nth-of-type(even) {
+    background-color: #0b1739;
+}
+td {
+    padding: 10px;
+    width: 33%;
+    border: none;
+}
+.pagination {
+    /* width: 500px; */
+    color: var(--secondary-text);
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+}
+select{
+    background-color: #0b1739;
+    color: var(--secondary-text);
+    border: none;
+    border-radius: 5px;
+    width: 50px;
+    height: 30px;   
+}
+.btn-next-prev {
+    background-color: rgba(87, 59, 138, 0);
+    margin: 0px;
+    padding: 0px;
+    width: 30px;
+    height: 30px;
+}
+.btn-next-prev:hover{
+    background-color: transparent;
+}
+button:disabled{
+    color: var(--secondary-text);
+}

@@ -1,0 +1,103 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+.logo {
+  width: 26px;
+  height: 26px;
+  display: block;
+  background-image: url('./assets/logo.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.dashboardIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  background-image: url('./assets/dashboard.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.projectsIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  background-image: url('./assets/projects.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.usersIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  background-image: url('./assets/users.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.settingsIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  background-image: url('./assets/settings.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.logoutIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  background-image: url('./assets/logout.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+/* .layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  width: 100vw;
+  height: 100vh;
+}
+
+.main-content {
+  overflow: auto;
+} */
+.layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}

@@ -1,0 +1,11 @@
+:root {
+    --sidebar-background: #081028;
+    --sidebar-background-active: #0A1330;
+    --sidebar-text-active: white;
+    --sidebar-text-inactive: #999;
+    --primary-background: #081028;
+    --form-background: #0B1739;
+    --primary-border: #343b4f;
+    --primary-text: white;
+    --secondary-text: #999;
+}

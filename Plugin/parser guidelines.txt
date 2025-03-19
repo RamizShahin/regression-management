@@ -1,0 +1,48 @@
+import json
+import os
+import glob
+
+
+def parse_logs(file_path, project, component):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+    # Extract the log file info
+    data = {
+       # write your log files attributes
+    }
+
+         
+    # split the log file as you want
+
+    return data
+
+def save_as_json(data, output_file):
+    with open(output_file, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+
+
+def process_logs_in_folder(folder_path):
+    project_name = folder_path.split("\\")[-1]
+    # Walk through the directory tree and find all .txt log files
+    for root, dirs, files in os.walk(folder_path):
+        # to skip the project structure.txt file
+        if 'project structure.txt' in files and root == folder_path:
+            files.remove('project structure.txt')
+        component = os.path.basename(root)
+        for file in files:
+            if file.endswith(".txt"):
+                input_file = os.path.join(root, file)
+                component = input_file.split("\\")[-1].split(".")[0]
+                output_file = os.path.splitext(input_file)[0] + ".json"
+
+                # Parse the log file and save as JSON
+                parsed_data = parse_logs(input_file, project_name, component)
+                save_as_json(parsed_data, output_file)
+                print(f"Logs from '{input_file}' have been parsed and saved to '{output_file}'")
+
+
+
+
+if __name__ == "__main__":
+    folder_path = "" # write your folder path
+    process_logs_in_folder(folder_path)

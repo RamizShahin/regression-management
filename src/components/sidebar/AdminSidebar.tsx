@@ -8,12 +8,12 @@ function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed); // Toggle state
+    setIsCollapsed(!isCollapsed);
   };
 
   const handleLogout = () => {
-    authService.logout(); // Clear user authentication
-    navigate("/login"); // Redirect to login
+    authService.logout();
+    navigate("/login");
   };
 
   return (

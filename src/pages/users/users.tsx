@@ -128,7 +128,6 @@ const Users = () => {
         <select
           value={table.getState().pagination.pageSize}
           onChange={(e) => table.setPageSize(Number(e.target.value))}
-          // className={styles.select}
         >
           {[1, 2, 5, 10].map((pageSize) => (
             <option key={pageSize} value={pageSize}>
@@ -150,9 +149,6 @@ const Users = () => {
         >
           &gt;
         </button>
-        {/* Filtering Input */}
-        {/* Table */}
-        {/* Pagination Controls */}
       </div>
     </div>
   );

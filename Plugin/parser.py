@@ -1,6 +1,5 @@
 import json
 import os
-import re
 
 
 def parse_logs(file_path, project, component):
@@ -103,8 +102,7 @@ def process_logs_in_folder(folder_path):
 
                 # Parse the log file and save as JSON
                 parsed_data, date = parse_logs(input_file, project_name, component)
-                date = date.replace(":","_")
-                date = date.replace(" ","_")
+                date = date.replace(":", "_").replace(" ", "_")
                 output_file = (os.path.splitext(input_file)[0] + "_" + date + ".json")
 
                 save_as_json(parsed_data, output_file)

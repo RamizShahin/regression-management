@@ -1,6 +1,6 @@
 import json
 import os
-import glob
+import re
 
 
 def parse_logs(file_path, project, component):
@@ -9,6 +9,7 @@ def parse_logs(file_path, project, component):
     errors_count = 0
     warn_count = 0
     error_level = []
+    date = lines[2].split(": ",1)[1].strip()
     status = 'UNKOWN'
     # Extract the log file info
     data = {
@@ -80,7 +81,7 @@ def parse_logs(file_path, project, component):
 
     data["summary"].append(log_entry)
 
-    return data
+    return data, date
 
 def save_as_json(data, output_file):
     with open(output_file, 'w') as json_file:
@@ -99,10 +100,13 @@ def process_logs_in_folder(folder_path):
             if file.endswith(".txt"):
                 input_file = os.path.join(root, file)
                 component = input_file.split("\\")[-1].split(".")[0]
-                output_file = os.path.splitext(input_file)[0] + ".json"
 
                 # Parse the log file and save as JSON
-                parsed_data = parse_logs(input_file, project_name, component)
+                parsed_data, date = parse_logs(input_file, project_name, component)
+                date = date.replace(":","_")
+                date = date.replace(" ","_")
+                output_file = (os.path.splitext(input_file)[0] + "_" + date + ".json")
+
                 save_as_json(parsed_data, output_file)
                 print(f"Logs from '{input_file}' have been parsed and saved to '{output_file}'")
 

@@ -8,3 +8,5 @@ now you can access the website from the port it says in the terminal and your lo
 the only account defined till now is:
 email: ramiz@gmail.com
 password: ramiz1234
+
+you can also open the website on "http://rmportal.duckdns.org/" !

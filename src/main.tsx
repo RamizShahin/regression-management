@@ -7,7 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import ProtectedRoute from "./components/common/ProtectedRoute.tsx";
 import "./index.css";
 import LoginPage from "./pages/login-page/LoginPage.tsx";
 import authService from "./services/auth";
@@ -15,10 +15,11 @@ import Unauthorized from "./pages/unauthorized/UnAuthorized.tsx";
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
 import Users from "./pages/users/users.tsx";
 import Projects from "./pages/projects/Projects.tsx";
-import Layout from "./components/Layout.tsx";
+import Layout from "./components/layout/Layout.tsx";
 import "./assets/colors.css";
 import Settings from "./pages/settings/Settings.tsx";
-import AddUser from "./pages/add-user/AddUser.tsx";
+import AddUser from "./pages/users/AddUser.tsx";
+import AddProject from "./pages/projects/AddProject.tsx";
 
 // Modify LoginRedirect to use initializeAuth
 const LoginRedirect = () => {
@@ -87,6 +88,15 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             element={<Projects />}
+            allowedRoles={["admin", "manager"]}
+          />
+        ),
+      },
+      {
+        path: "/projects/add",
+        element: (
+          <ProtectedRoute
+            element={<AddProject />}
             allowedRoles={["admin", "manager"]}
           />
         ),

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,99 +9,50 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import styles from "./projects.module.css";
+import authService from "../../services/auth";
 
 function Projects() {
-  const data = React.useMemo(
-    () => [
-      {
-        id: 1,
-        name: "Website Redesign",
-        status: "In Progress",
-        deadline: "2025-03-15",
-      },
-      {
-        id: 2,
-        name: "Mobile App Development",
-        status: "Completed",
-        deadline: "2024-12-01",
-      },
-      {
-        id: 3,
-        name: "Cloud Migration",
-        status: "In Progress",
-        deadline: "2025-05-20",
-      },
-      {
-        id: 4,
-        name: "E-commerce Platform",
-        status: "Pending",
-        deadline: "2025-07-10",
-      },
-      {
-        id: 5,
-        name: "Marketing Campaign",
-        status: "Completed",
-        deadline: "2024-11-20",
-      },
-      {
-        id: 6,
-        name: "AI Chatbot Integration",
-        status: "In Progress",
-        deadline: "2025-06-30",
-      },
-      {
-        id: 7,
-        name: "Cybersecurity Audit",
-        status: "Pending",
-        deadline: "2025-09-15",
-      },
-      {
-        id: 8,
-        name: "New Feature Rollout",
-        status: "In Progress",
-        deadline: "2025-04-05",
-      },
-      {
-        id: 9,
-        name: "Customer Support Portal",
-        status: "Completed",
-        deadline: "2024-10-15",
-      },
-      {
-        id: 10,
-        name: "Data Analytics Dashboard",
-        status: "Pending",
-        deadline: "2025-08-01",
-      },
-    ],
-    []
-  );
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState("");
+
+  const [data, setData] = React.useState([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          "/api/projects"
+        );
+        const jsonData = await response.json();
+        setData(jsonData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Table Columns
-  const columns = React.useMemo(
-    () => [
-      {
-        accessorKey: "id",
-        header: "ID",
-      },
-      {
-        accessorKey: "name",
-        header: "Project Name",
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-      },
-      {
-        accessorKey: "deadline",
-        header: "Deadline",
-      },
-    ],
-    []
-  );
+  const columns = React.useMemo(() => {
+    if (data.length === 0)
+      return [
+        { accessorKey: "project_name", header: "Name" },
+        {
+          accessorKey: "project_description",
+          header: "Description",
+        },
+      ];
 
-  // State for Filtering
-  const [filter, setFilter] = useState("");
+    const excludedKeys = ["project_id"]; // keys you want to skip
+
+    return Object.keys(data[0])
+      .filter((key) => !excludedKeys.includes(key)) // filter them out
+      .map((key) => ({
+        accessorKey: key,
+        header: key.charAt(0).toUpperCase() + key.slice(1),
+      }));
+  }, [data]);
 
   // Create Table Instance
   const table = useReactTable({
@@ -129,7 +81,12 @@ function Projects() {
             className={styles.search}
           />
         </div>
-        <button className={styles["btn-addProject"]}>Add Project</button>
+        <button
+          className={styles["btn-addProject"]}
+          onClick={() => navigate("/projects/add")}
+        >
+          Add Project
+        </button>
       </div>
       <div className={styles.table}>
         <label className={styles.label2}>All Projects</label>

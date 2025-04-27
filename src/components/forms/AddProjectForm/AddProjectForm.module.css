@@ -1,0 +1,382 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--primary-background);
+  color: white;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.label1 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 1em 3em;
+  margin-left: 48px;
+}
+
+.backButton {
+  background-color: #cb3cff;
+  border: 1px solid var(--primary-border);
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  width: 12em;
+  margin: 0 3em;
+}
+
+.content {
+  /* background-color: white; */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.formSection {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Step indicator styles */
+.stepIndicator {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.stepIndicator::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #e0e0e0;
+  z-index: 1;
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
+
+.stepNumber {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.stepName {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+.activeStep .stepNumber {
+  background-color: #3f51b5;
+  color: white;
+}
+
+.activeStep .stepName {
+  color: #3f51b5;
+  font-weight: bold;
+}
+
+.completedStep .stepNumber {
+  background-color: #4caf50;
+  color: white;
+}
+
+.completedStep .stepName {
+  color: #4caf50;
+}
+
+/* Step container styles */
+.stepContainer {
+  padding: 20px 0;
+}
+
+.stepDescription {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+/* Form group styles */
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.labelIcon {
+  margin-right: 8px;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.inputWrapper input,
+.inputWrapper textarea,
+.inputWrapper select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.inputWrapper textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.inputError {
+  border-color: #d32f2f !important;
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Module and components styles */
+.moduleForm,
+.componentForm {
+  background-color: var(--form-background);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.moduleActions,
+.componentActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.moduleButton, .cancelButton, .prevButton {
+  padding: 10px 20px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  /* margin: 0px 10px; */
+}
+
+.moduleButton:hover, .prevButton:hover {
+  background-color: #303f9f;
+}
+
+.cancelButton:hover {
+  background-color: red;
+}
+
+.moduleList,
+.componentList {
+  margin-top: 30px;
+}
+
+.moduleGrid,
+.componentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.moduleCard,
+.componentCard {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.moduleHeader,
+.componentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.moduleName,
+.componentName,
+.componentDescription {
+  color: #666;
+  font-size: 14px;
+}
+
+.moduleSelector {
+  margin-bottom: 20px;
+  padding: 15px;
+  width: fit-content;
+  height: 100%
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 0px;
+}
+
+.emptyState {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.moduleSelectMessage,
+.noModulesMessage {
+  padding: 20px;
+  background-color: #fff3e0;
+  border-radius: 8px;
+  color: #e65100;
+  margin-top: 20px;
+}
+
+/* Step navigation */
+.stepNavigation {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.stepNavigation button {
+  margin: 0px 30px;
+}
+
+.nextButton,
+.submitButton {
+  padding: 10px 20px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.nextButton:hover,
+.submitButton:hover {
+  background-color: #303f9f;
+}
+
+.submitButton:disabled {
+  background-color: #9e9e9e;
+  cursor: not-allowed;
+  color: black;
+}
+
+/* Review styles */
+.reviewSection {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: var(--form-background);
+  border-radius: 8px;
+}
+
+.reviewItem {
+  display: flex;
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.reviewLabel {
+  width: 140px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.reviewValue {
+  flex: 1;
+}
+
+.errorSummary {
+  background-color: var(--form-background);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.errorSummary h4 {
+  color: #d32f2f;
+  margin-top: 0;
+}
+
+.errorSummary ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.componentCount {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.moduleReviewCard {
+  background-color: var(--primary-background);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.moduleReviewName {
+  margin-top: 0;
+  color: var(--text-primary);
+}
+
+.moduleReviewDescription {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.componentReviewList {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.componentReviewItem {
+  margin-bottom: 8px;
+}
+
+.componentReviewItem p {
+  margin: 5px 0 0 0;
+  color: #666;
+  font-size: 14px;
+} 

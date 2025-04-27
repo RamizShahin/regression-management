@@ -9,43 +9,41 @@ import {
 } from "@tanstack/react-table";
 import styles from "./users.module.css";
 import { useNavigate } from "react-router-dom";
+import authService from "../../services/auth";
 
 const Users = () => {
   // Sample Data
-  const data = React.useMemo(
-    () => [
-      { id: 1, name: "John Doe", age: 30 },
-      { id: 2, name: "Jane Smith", age: 25 },
-      { id: 3, name: "Sam Johnson", age: 35 },
-      { id: 4, name: "Alice Brown", age: 28 },
-      { id: 5, name: "Michael Lee", age: 40 },
-      { id: 6, name: "Emily Davis", age: 22 },
-      { id: 7, name: "David Clark", age: 29 },
-      { id: 8, name: "Sophia Martinez", age: 33 },
-      { id: 9, name: "Daniel White", age: 27 },
-      { id: 10, name: "Olivia Harris", age: 31 },
-    ],
-    []
-  );
+  const [data, setData] = React.useState([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          "/api/users"
+        );
+        const jsonData = await response.json();
+        setData(jsonData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Table Columns
-  const columns = React.useMemo(
-    () => [
-      {
-        accessorKey: "id",
-        header: "ID",
-      },
-      {
-        accessorKey: "name",
-        header: "Name",
-      },
-      {
-        accessorKey: "age",
-        header: "Age",
-      },
-    ],
-    []
-  );
+  const columns = React.useMemo(() => {
+    if (data.length === 0) return [];
+
+    const excludedKeys = ["user_id", "password", "created_at", "updated_at"]; // keys you want to skip
+
+    return Object.keys(data[0])
+      .filter((key) => !excludedKeys.includes(key)) // filter them out
+      .map((key) => ({
+        accessorKey: key,
+        header: key.charAt(0).toUpperCase() + key.slice(1),
+      }));
+  }, [data]);
 
   // State for Filtering
   const [filter, setFilter] = useState("");

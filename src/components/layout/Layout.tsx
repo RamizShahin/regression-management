@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./sidebar/AdminSidebar";
-import authService from "../services/auth";
+import authService from "../../services/auth";
 
 export default function Layout() {
   const [isLoading, setIsLoading] = useState(true);

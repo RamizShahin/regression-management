@@ -11,6 +11,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^7.0.2",
     "@tanstack/react-table": "^8.21.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",

@@ -3,20 +3,18 @@ import { useNavigate } from "react-router-dom";
 import styles from "./AddUserForm.module.css";
 import PersonalInfo from "./steps/PersonalInfo";
 import AccountDetails from "./steps/AccountDetails";
-import AdditionalInfo from "./steps/AdditionalInfo";
+import ProjectAssignment from "./steps/ProjectAssignment";
 import { userFormSchema, type UserFormData } from "./validationSchema";
 import { ZodError } from "zod";
+import authService from "../../../services/auth";
 
 const INITIAL_FORM_DATA: UserFormData = {
-  firstName: "",
-  lastName: "",
+  fullName: "",
   email: "",
-  username: "",
   password: "",
+  phone: "",
   role: "user",
-  department: "",
-  position: "",
-  startDate: "",
+  projects: [],
 };
 
 const AddUserForm: React.FC = () => {
@@ -35,12 +33,14 @@ const AddUserForm: React.FC = () => {
       component: AccountDetails,
     },
     {
-      title: "Additional Information",
-      component: AdditionalInfo,
+      title: "Project Assignment",
+      component: ProjectAssignment,
     },
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -56,23 +56,35 @@ const AddUserForm: React.FC = () => {
     }
   };
 
+  const handleProjectChange = (selectedProjects: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      projects: selectedProjects,
+    }));
+
+    // Clear error when projects are selected
+    if (errors.projects) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.projects;
+        return newErrors;
+      });
+    }
+  };
+
   const validateStep = () => {
     try {
       switch (currentStep) {
         case 0:
           userFormSchema
-            .pick({ firstName: true, lastName: true, email: true })
+            .pick({ fullName: true, email: true, phone: true })
             .parse(formData);
           break;
         case 1:
-          userFormSchema
-            .pick({ username: true, password: true, role: true })
-            .parse(formData);
+          userFormSchema.pick({ password: true, role: true }).parse(formData);
           break;
         case 2:
-          userFormSchema
-            .pick({ department: true, position: true, startDate: true })
-            .parse(formData);
+          userFormSchema.pick({ projects: true }).parse(formData);
           break;
       }
       return true;
@@ -100,6 +112,13 @@ const AddUserForm: React.FC = () => {
     try {
       const validatedData = userFormSchema.parse(formData);
       console.log("Form submitted:", validatedData);
+      await authService.makeAuthenticatedRequest("/api/users/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validatedData),
+      });
       navigate("/users");
     } catch (error) {
       if (error instanceof ZodError) {
@@ -146,12 +165,21 @@ const AddUserForm: React.FC = () => {
         <div className={styles.formSection}>
           <h2>{steps[currentStep].title}</h2>
           <form className={styles["add-user-form"]} onSubmit={handleSubmit}>
-            <CurrentStepComponent
-              formData={formData}
-              onChange={handleInputChange}
-              errors={errors}
-            />
-            {/* <div className={styles.buttonGroup}> */}
+            {currentStep === 2 ? (
+              <ProjectAssignment
+                formData={formData}
+                onChange={handleInputChange}
+                onProjectsChange={handleProjectChange}
+                errors={errors}
+              />
+            ) : (
+              <CurrentStepComponent
+                formData={formData}
+                onChange={handleInputChange}
+                onProjectsChange={handleProjectChange}
+                errors={errors}
+              />
+            )}
             {currentStep < steps.length - 1 && (
               <button
                 type="button"
@@ -166,7 +194,6 @@ const AddUserForm: React.FC = () => {
                 Add User
               </button>
             )}
-            {/* </div> */}
           </form>
         </div>
       </div>

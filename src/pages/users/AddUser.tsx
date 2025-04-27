@@ -1,4 +1,4 @@
-import AddUserForm from "../../components/AddUserForm/AddUserForm";
+import AddUserForm from "../../components/forms/AddUserForm/AddUserForm";
 
 const AddUser = () => {
   return <AddUserForm />;

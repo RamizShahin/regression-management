@@ -4,6 +4,7 @@ export interface AuthUser {
   user_id: number;
   email: string;
   name: string;
+  phone: string;
   role: UserRole;
 }
 
@@ -26,12 +27,13 @@ class AuthService {
         user_id: data.user.user_id,
         email: data.user.email,
         name: data.user.name,
+        phone: data.user.phone,
         role: data.user.role,
       };
     } else {
       throw new Error(data.message || "Login failed");
     }
-    return this.currentUser;
+    // return this.currentUser;
   }
 
   async refreshAccessToken() {
@@ -51,6 +53,7 @@ class AuthService {
           user_id: data.user.user_id,
           email: data.user.email,
           name: data.user.name,
+          phone: data.user.phone,
           role: data.user.role,
         };
       }
@@ -122,6 +125,7 @@ class AuthService {
           user_id: data.user.user_id,
           email: data.user.email,
           name: data.user.name,
+          phone: data.user.phone,
           role: data.user.role,
         };
         return true;

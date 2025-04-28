@@ -67,37 +67,10 @@ router.post('/login', async (req, res) => {
         user_id: user.user_id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        phone: user.phone
       }
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Register route
-router.post('/register', async (req, res) => {
-  try {
-    const { email, name, password, role } = req.body;
-
-    // Check if user already exists
-    const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (existingUsers.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Insert user into database
-    const [result] = await db.query(
-      'INSERT INTO users (email, name, password, role) VALUES (?, ?, ?, ?)',
-      [email, name, hashedPassword, role || 'user']
-    );
-
-    res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -143,6 +116,7 @@ router.post('/refresh', async (req, res) => {
         user_id: user.user_id,
         name: user.name,
         email: user.email, 
+        phone: user.phone,
         role: user.role 
       },
       JWT_SECRET,
@@ -155,6 +129,7 @@ router.post('/refresh', async (req, res) => {
         user_id: user.user_id,
         email: user.email,
         name: user.name,
+        phone: user.phone,
         role: user.role
       }
     });

@@ -113,3 +113,6 @@ select{
 button:disabled{
     color: var(--secondary-text);
 }
+tr:hover{
+    cursor: pointer;
+}

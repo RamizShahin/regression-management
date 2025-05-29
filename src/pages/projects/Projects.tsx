@@ -115,7 +115,17 @@ function Projects() {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className={styles.trow}>
+              <tr
+                key={row.id}
+                className={styles.trow}
+                onClick={() => {
+                  // Safely access project_id if it exists
+                  const projectId = (row.original as { project_id?: string | number })?.project_id;
+                  if (projectId !== undefined) {
+                    navigate(`/projects/${projectId}`);
+                  }
+                }}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

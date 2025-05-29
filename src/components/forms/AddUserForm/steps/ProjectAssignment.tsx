@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { UserFormData } from "../validationSchema";
 import styles from "../AddUserForm.module.css";
+import authService from "../../../../services/auth";
 
 type ProjectType = {
-  id: number;
-  name: string;
-  status: string;
-  deadline: string;
+  project_id: number;
+  project_name: string;
+  project_description: string;
 };
 
 type ProjectAssignmentProps = {
@@ -29,81 +29,30 @@ const ProjectAssignment: React.FC<ProjectAssignmentProps> = ({
   const [filteredProjects, setFilteredProjects] = useState<ProjectType[]>([]);
 
   // Normally you would fetch this from an API
-  useEffect(() => {
-    // Mock data - in a real app, you would fetch from API
-    const mockProjects = [
-      {
-        id: 1,
-        name: "Website Redesign",
-        status: "In Progress",
-        deadline: "2025-03-15",
-      },
-      {
-        id: 2,
-        name: "Mobile App Development",
-        status: "Completed",
-        deadline: "2024-12-01",
-      },
-      {
-        id: 3,
-        name: "Cloud Migration",
-        status: "In Progress",
-        deadline: "2025-05-20",
-      },
-      {
-        id: 4,
-        name: "E-commerce Platform",
-        status: "Pending",
-        deadline: "2025-07-10",
-      },
-      {
-        id: 5,
-        name: "Marketing Campaign",
-        status: "Completed",
-        deadline: "2024-11-20",
-      },
-      {
-        id: 6,
-        name: "AI Chatbot Integration",
-        status: "In Progress",
-        deadline: "2025-06-30",
-      },
-      {
-        id: 7,
-        name: "Cybersecurity Audit",
-        status: "Pending",
-        deadline: "2025-09-15",
-      },
-      {
-        id: 8,
-        name: "New Feature Rollout",
-        status: "In Progress",
-        deadline: "2025-04-05",
-      },
-      {
-        id: 9,
-        name: "Customer Support Portal",
-        status: "Completed",
-        deadline: "2024-10-15",
-      },
-      {
-        id: 10,
-        name: "Data Analytics Dashboard",
-        status: "Pending",
-        deadline: "2025-08-01",
-      },
-    ];
-    setAvailableProjects(mockProjects);
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          "/api/projects"
+        );
+        const jsonData = await response.json();
+        setAvailableProjects(jsonData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
     if (searchTerm.trim()) {
       const filtered = availableProjects.filter((project) =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase())
+        project.project_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredProjects(filtered);
     } else {
-      setFilteredProjects([]);
+      setFilteredProjects(availableProjects);
     }
   }, [searchTerm, availableProjects]);
 
@@ -125,7 +74,7 @@ const ProjectAssignment: React.FC<ProjectAssignmentProps> = ({
     onProjectsChange(updatedProjects);
   };
 
-  const shouldShowProjects = searchTerm.trim().length > 0;
+  const shouldShowProjects = searchTerm.trim().length >= 0;
 
   return (
     <div className={styles.stepContainer}>
@@ -162,34 +111,22 @@ const ProjectAssignment: React.FC<ProjectAssignmentProps> = ({
           <div className={styles.projectGrid}>
             {filteredProjects.length > 0 ? (
               filteredProjects.map((project) => (
-                <div key={project.id} className={styles.projectCard}>
+                <div key={project.project_id} className={styles.projectCard}>
                   <label className={styles.checkboxContainer}>
                     <input
                       type="checkbox"
                       checked={formData.projects.includes(
-                        project.id.toString()
+                        project.project_id.toString()
                       )}
                       onChange={() =>
-                        handleCheckboxChange(project.id.toString())
+                        handleCheckboxChange(project.project_id.toString())
                       }
                     />
-                    <div className={styles.projectCardContent}>
-                      <span className={styles.projectName}>{project.name}</span>
-                      <span
-                        className={`${styles.projectStatus} ${
-                          styles[
-                            `status-${project.status
-                              .toLowerCase()
-                              .replace(/\s+/g, "")}`
-                          ]
-                        }`}
-                      >
-                        {project.status}
-                      </span>
-                      <span className={styles.projectDeadline}>
-                        Due: {project.deadline}
-                      </span>
-                    </div>
+                    {/* <div className={styles.projectCardContent}> */}
+                    <span className={styles.projectName}>
+                      {project.project_name}
+                    </span>
+                    {/* </div> */}
                   </label>
                 </div>
               ))
@@ -206,12 +143,12 @@ const ProjectAssignment: React.FC<ProjectAssignmentProps> = ({
           <ul>
             {formData.projects.map((projectId) => {
               const project = availableProjects.find(
-                (p) => p.id.toString() === projectId
+                (p) => p.project_id.toString() === projectId
               );
               return project ? (
                 <li key={projectId}>
                   <span className={styles.selectedProjectName}>
-                    {project.name}
+                    {project.project_name}
                   </span>
                   <button
                     className={styles.removeProjectBtn}

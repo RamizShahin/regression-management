@@ -20,6 +20,8 @@ import "./assets/colors.css";
 import Settings from "./pages/settings/Settings.tsx";
 import AddUser from "./pages/users/AddUser.tsx";
 import AddProject from "./pages/projects/AddProject.tsx";
+import ProjectPortal from "./pages/projects/ProjectPortal.tsx";
+import NewRegressionRun from "./pages/projects/new-regression/NewRegression.tsx";
 
 // Modify LoginRedirect to use initializeAuth
 const LoginRedirect = () => {
@@ -97,6 +99,24 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             element={<AddProject />}
+            allowedRoles={["admin", "manager"]}
+          />
+        ),
+      },
+      {
+        path: "/projects/:id",
+        element: (
+          <ProtectedRoute
+            element={<ProjectPortal />}
+            allowedRoles={["admin", "manager"]}
+          />
+        ),
+      },
+      {
+        path: "/projects/:id/new-regression",
+        element: (
+          <ProtectedRoute
+            element={<NewRegressionRun />}
             allowedRoles={["admin", "manager"]}
           />
         ),

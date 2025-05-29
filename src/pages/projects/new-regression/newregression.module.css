@@ -1,0 +1,73 @@
+/* NewRegressionRun.css */
+
+.new-regression-container {
+    padding: 20px;
+    /* width: 100%; */
+    height: 100%;
+    background-color: var(--primary-background);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+    color: var(--primary-text);
+  }
+  
+  .new-regression-container h1 {
+    text-align: left;
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .regression-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .form-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  
+  .form-row label {
+    width: 250px;
+    margin-right: 16px;
+    font-weight: bold;
+    font-size: 22px;
+  }
+  
+  .form-row input[type="text"],
+  .form-row select,
+  .form-row input[type="file"],
+  .form-row input[type="date"] {
+    flex: 1;
+    max-width: 40%;
+    height: fit-content;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-left: 10px;
+    background-color: #f0f0f0;
+    color: black;
+  }
+  
+  .regression-form button {
+    padding: 0px;
+    width: 12em;
+    background-color: #cb3cff;
+    font-size: 13px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .regression-form button:hover {
+    background-color: #45a049;
+  }
+  

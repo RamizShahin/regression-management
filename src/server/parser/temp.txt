@@ -1,0 +1,13 @@
+INSERT INTO test_results (component_id, owner_id, result_value)
+SELECT 
+  c.component_id,
+  up.user_id,
+  'PASS'
+FROM components c
+JOIN modules m ON c.module_id = m.module_id
+JOIN user_project up ON up.project_id = m.project_id
+JOIN users u ON u.user_id = up.user_id
+WHERE c.component_name = 'Login Form'
+  AND m.project_id = 42
+  AND u.name = 'Alice'
+LIMIT 1;

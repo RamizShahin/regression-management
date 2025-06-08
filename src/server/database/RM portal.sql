@@ -95,4 +95,6 @@ ALTER TABLE `logs` ADD FOREIGN KEY (`run_id`) REFERENCES `regression_runs` (`run
 
 ALTER TABLE `errors` ADD FOREIGN KEY (`test_id`) REFERENCES `test_cases` (`test_id`);
 
-ALTER TABLE `refresh_tokens` ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+ALTER TABLE `refresh_tokens` ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
+ALTER TABLE `user_project` ADD FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;

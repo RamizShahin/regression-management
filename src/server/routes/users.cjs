@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const db = require("../config/database.cjs");
 const { verifyToken } = require("../middleware/auth.cjs");
 
-// Add new user route (admin only)
+// Add new user route (admin or manager)
 router.post("/add", verifyToken, async (req, res) => {
   try {
     if (req.user.role !== "admin" && req.user.role !== "manager") {
@@ -12,9 +12,7 @@ router.post("/add", verifyToken, async (req, res) => {
     }
 
     const { fullName, email, password, phone, role, projects } = req.body;
-    console.log(req.body);
 
-    // Check if user already exists
     const [existingUsers] = await db.query(
       "SELECT * FROM users WHERE email = ?",
       [email]
@@ -23,14 +21,11 @@ router.post("/add", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Start a transaction
     await db.query("START TRANSACTION");
 
-    // Insert user into database
     const [result] = await db.query(
       "INSERT INTO users (email, phone, name, password, role) VALUES (?, ?, ?, ?, ?)",
       [email, phone, fullName, hashedPassword, role || "user"]
@@ -38,7 +33,6 @@ router.post("/add", verifyToken, async (req, res) => {
 
     const userId = result.insertId;
 
-    // Assign projects if provided
     if (projects && Array.isArray(projects) && projects.length > 0) {
       const projectValues = projects.map((projectId) => [
         userId,
@@ -51,7 +45,6 @@ router.post("/add", verifyToken, async (req, res) => {
       );
     }
 
-    // Commit transaction
     await db.query("COMMIT");
 
     res.status(201).json({
@@ -59,25 +52,47 @@ router.post("/add", verifyToken, async (req, res) => {
       user_id: userId,
     });
   } catch (error) {
-    // Rollback if error occurs
     await db.query("ROLLBACK");
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// Get all users (protected, only admin and manager can access)
+// Get all users (admin or manager only)
 router.get("/", verifyToken, async (req, res) => {
   if (req.user.role !== "admin" && req.user.role !== "manager") {
     return res.status(403).json({ message: "Unauthorized" });
   }
 
   try {
-    // Get users from database
     const [users] = await db.query("SELECT * FROM users");
     res.json(users);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delete user (admin or manager only)
+router.delete("/:id", verifyToken, async (req, res) => {
+  const userIdToDelete = req.params.id;
+
+  if (req.user.role !== "admin" && req.user.role !== "manager") {
+    return res.status(403).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const [result] = await db.query("DELETE FROM users WHERE user_id = ?", [
+      userIdToDelete,
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

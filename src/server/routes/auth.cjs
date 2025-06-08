@@ -20,47 +20,45 @@ router.post('/login', async (req, res) => {
 
     // Check password
     const validPassword = await bcrypt.compare(password, user.password);
-    // const validPassword = true;
     if (!validPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Delete all existing refresh tokens for this user
+    // Delete existing refresh tokens for this user
     await db.query('DELETE FROM refresh_tokens WHERE user_id = ?', [user.user_id]);
 
-    // Create access token (short lived)
+    // Create tokens
     const accessToken = jwt.sign(
-      { 
-        user_id: user.user_id,
-        email: user.email, 
-        role: user.role 
-      },
+      { user_id: user.user_id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: '15m' }
     );
 
-    // Create refresh token (long lived)
-    const refreshToken = jwt.sign(
-      { user_id: user.user_id },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const refreshToken = jwt.sign({ user_id: user.user_id }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Store refresh token in database
+    // Store refresh token
     await db.query(
       'INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)',
       [user.user_id, refreshToken]
     );
 
-    // Set refresh token as HTTP-only cookie
+    // Set cookie
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    // Only send access token in response body
+    // Get assigned projects
+    const [projectRows] = await db.query(`
+      SELECT p.project_id, p.project_name
+      FROM projects p
+      JOIN user_project up ON p.project_id = up.project_id
+      WHERE up.user_id = ?
+    `, [user.user_id]);
+
+    // Send response
     res.json({
       accessToken,
       user: {
@@ -68,7 +66,8 @@ router.post('/login', async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        phone: user.phone
+        phone: user.phone,
+        projects: projectRows
       }
     });
   } catch (error) {
@@ -77,9 +76,8 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Modify refresh token route to use cookie
+// Refresh token route
 router.post('/refresh', async (req, res) => {
-  // Get refresh token from cookie instead of request body
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
@@ -87,10 +85,8 @@ router.post('/refresh', async (req, res) => {
   }
 
   try {
-    // Verify refresh token
     const decoded = jwt.verify(refreshToken, JWT_SECRET);
 
-    // Check if refresh token exists in database
     const [tokens] = await db.query(
       'SELECT * FROM refresh_tokens WHERE user_id = ? AND token = ?',
       [decoded.user_id, refreshToken]
@@ -100,28 +96,33 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
-    // Get user from database
     const [users] = await db.query('SELECT * FROM users WHERE user_id = ?', [decoded.user_id]);
     const user = users[0];
 
     if (!user) {
-      // Delete the orphaned refresh token
       await db.query('DELETE FROM refresh_tokens WHERE token = ?', [refreshToken]);
       return res.status(401).json({ message: 'User not found' });
     }
 
-    // Generate new access token
     const accessToken = jwt.sign(
-      { 
+      {
         user_id: user.user_id,
         name: user.name,
-        email: user.email, 
+        email: user.email,
         phone: user.phone,
-        role: user.role 
+        role: user.role
       },
       JWT_SECRET,
       { expiresIn: '15m' }
     );
+
+    // Get assigned projects
+    const [projectRows] = await db.query(`
+      SELECT p.project_id, p.project_name
+      FROM projects p
+      JOIN user_project up ON p.project_id = up.project_id
+      WHERE up.user_id = ?
+    `, [user.user_id]);
 
     res.json({
       accessToken,
@@ -130,12 +131,12 @@ router.post('/refresh', async (req, res) => {
         email: user.email,
         name: user.name,
         phone: user.phone,
-        role: user.role
+        role: user.role,
+        projects: projectRows
       }
     });
   } catch (error) {
     console.log("error: ", error);
-    // If token is expired or invalid, delete it from database
     if (refreshToken) {
       await db.query('DELETE FROM refresh_tokens WHERE token = ?', [refreshToken]);
     }
@@ -143,18 +144,16 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-// Add logout route
+// Logout
 router.post('/logout', async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  
+
   if (refreshToken) {
-    // Delete refresh token from database
     await db.query('DELETE FROM refresh_tokens WHERE token = ?', [refreshToken]);
   }
 
-  // Clear refresh token cookie
   res.clearCookie('refreshToken');
   res.json({ message: 'Logged out successfully' });
 });
 
-module.exports = router; 
+module.exports = router;

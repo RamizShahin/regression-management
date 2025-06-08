@@ -1,22 +1,20 @@
+// ProjectAssignment.tsx
 import React, { useState, useEffect } from "react";
 import { UserFormData } from "../validationSchema";
-import styles from "../AddUserForm.module.css";
 import authService from "../../../../services/auth";
 
-type ProjectType = {
+interface ProjectType {
   project_id: number;
   project_name: string;
   project_description: string;
-};
+}
 
-type ProjectAssignmentProps = {
+interface ProjectAssignmentProps {
   formData: UserFormData;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onProjectsChange: (selectedProjects: string[]) => void;
   errors: Record<string, string>;
-};
+}
 
 const ProjectAssignment: React.FC<ProjectAssignmentProps> = ({
   formData,
@@ -28,133 +26,90 @@ const ProjectAssignment: React.FC<ProjectAssignmentProps> = ({
   const [availableProjects, setAvailableProjects] = useState<ProjectType[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<ProjectType[]>([]);
 
-  // Normally you would fetch this from an API
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authService.makeAuthenticatedRequest(
-          "/api/projects"
-        );
+        const response = await authService.makeAuthenticatedRequest("/api/projects");
         const jsonData = await response.json();
         setAvailableProjects(jsonData);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching projects:", error);
       }
     };
-
     fetchData();
   }, []);
 
   useEffect(() => {
-    if (searchTerm.trim()) {
-      const filtered = availableProjects.filter((project) =>
-        project.project_name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredProjects(filtered);
-    } else {
-      setFilteredProjects(availableProjects);
-    }
+    const filtered = availableProjects.filter((project) =>
+      project.project_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredProjects(filtered);
   }, [searchTerm, availableProjects]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
   const handleCheckboxChange = (projectId: string) => {
-    let updatedProjects: string[];
-
-    if (formData.projects.includes(projectId)) {
-      // Remove if already selected
-      updatedProjects = formData.projects.filter((id) => id !== projectId);
-    } else {
-      // Add if not selected
-      updatedProjects = [...formData.projects, projectId];
-    }
+    const updatedProjects = formData.projects.includes(projectId)
+      ? formData.projects.filter((id) => id !== projectId)
+      : [...formData.projects, projectId];
 
     onProjectsChange(updatedProjects);
   };
 
-  const shouldShowProjects = searchTerm.trim().length >= 0;
-
   return (
-    <div className={styles.stepContainer}>
-      <div className={styles.formGroup}>
-        <label htmlFor="projectSearch">
-          <span className={styles.labelIcon}>🔍</span>
+    <div className="space-y-6">
+      <div>
+        <label htmlFor="projectSearch" className="block text-sm font-medium text-gray-300 mb-1">
           Search Projects
         </label>
-        <div className={styles.inputWrapper}>
-          <input
-            type="text"
-            id="projectSearch"
-            value={searchTerm}
-            onChange={handleSearch}
-            placeholder="Type to search projects..."
-            className={styles.fancySearchInput}
-          />
-          {/* <span className={styles.searchIcon}>🔍</span> */}
-        </div>
+        <input
+          id="projectSearch"
+          type="text"
+          placeholder="Type to search projects..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-md bg-gray-800 text-white px-4 py-2 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
       </div>
 
-      {shouldShowProjects && (
-        <>
-          <div className={styles.formGroup}>
-            <label>
-              <span className={styles.labelIcon}>📋</span>
-              Projects
-            </label>
-            {errors.projects && (
-              <div className={styles.error}>{errors.projects}</div>
-            )}
-          </div>
+      {errors.projects && <div className="text-red-500 text-sm">{errors.projects}</div>}
 
-          <div className={styles.projectGrid}>
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map((project) => (
-                <div key={project.project_id} className={styles.projectCard}>
-                  <label className={styles.checkboxContainer}>
-                    <input
-                      type="checkbox"
-                      checked={formData.projects.includes(
-                        project.project_id.toString()
-                      )}
-                      onChange={() =>
-                        handleCheckboxChange(project.project_id.toString())
-                      }
-                    />
-                    {/* <div className={styles.projectCardContent}> */}
-                    <span className={styles.projectName}>
-                      {project.project_name}
-                    </span>
-                    {/* </div> */}
-                  </label>
-                </div>
-              ))
-            ) : (
-              <div className={styles.noResults}>No projects found</div>
-            )}
-          </div>
-        </>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-60 overflow-y-auto pr-2">
+        {filteredProjects.length > 0 ? (
+          filteredProjects.map((project) => (
+            <label
+              key={project.project_id}
+              className="flex items-center space-x-3 bg-gray-800 px-4 py-3 rounded-lg cursor-pointer hover:bg-gray-700 transition"
+            >
+              <input
+                type="checkbox"
+                checked={formData.projects.includes(project.project_id.toString())}
+                onChange={() => handleCheckboxChange(project.project_id.toString())}
+                className="accent-purple-500 w-4 h-4"
+              />
+              <span className="text-white text-sm">{project.project_name}</span>
+            </label>
+          ))
+        ) : (
+          <p className="text-gray-400 text-sm col-span-full">No projects found</p>
+        )}
+      </div>
 
       {formData.projects.length > 0 && (
-        <div className={styles.selectedProjectsSummary}>
-          <h3>Selected Projects ({formData.projects.length})</h3>
-          <ul>
+        <div className="bg-gray-800 p-4 rounded-md">
+          <h3 className="text-white font-medium mb-2">
+            Selected Projects ({formData.projects.length})
+          </h3>
+          <ul className="space-y-1 text-sm text-white">
             {formData.projects.map((projectId) => {
               const project = availableProjects.find(
                 (p) => p.project_id.toString() === projectId
               );
               return project ? (
-                <li key={projectId}>
-                  <span className={styles.selectedProjectName}>
-                    {project.project_name}
-                  </span>
+                <li key={projectId} className="flex justify-between items-center">
+                  <span>{project.project_name}</span>
                   <button
-                    className={styles.removeProjectBtn}
                     onClick={() => handleCheckboxChange(projectId)}
+                    className="text-red-400 hover:text-red-600 text-sm"
                     type="button"
-                    aria-label="Remove project"
                   >
                     ✕
                   </button>

@@ -1,75 +1,68 @@
 import React from "react";
 import { UserFormData } from "../validationSchema";
-import styles from "../AddUserForm.module.css";
 
-type PersonalInfoProps = {
+interface Props {
   formData: UserFormData;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onProjectsChange?: (selectedProjects: string[]) => void;
   errors: Record<string, string>;
-};
+}
 
-const PersonalInfo: React.FC<PersonalInfoProps> = ({
-  formData,
-  onChange,
-  errors,
-}) => {
+const PersonalInfo: React.FC<Props> = ({ formData, onChange, errors }) => {
   return (
-    <div className={styles.stepContainer}>
-      <div className={styles.formGroup}>
-        <label htmlFor="fullName">
-          <span className={styles.labelIcon}>👤</span>
-          Full Name
+    <div className="space-y-6">
+      {/* Full Name */}
+      <div>
+        <label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-1">
+          <span className="mr-1">👤</span> Full Name
         </label>
-        <div className={styles.inputWrapper}>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            value={formData.fullName}
-            onChange={onChange}
-            className={errors.fullName ? styles.inputError : ""}
-          />
-          {errors.fullName && (
-            <div className={styles.error}>{errors.fullName}</div>
-          )}
-        </div>
+        <input
+          type="text"
+          id="fullName"
+          name="fullName"
+          value={formData.fullName}
+          onChange={onChange}
+          className={`w-full rounded-md bg-gray-800 text-white px-4 py-2 border ${
+            errors.fullName ? 'border-red-500' : 'border-gray-700'
+          } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+        />
+        {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
       </div>
 
-      <div className={styles.formGroup}>
-        <label htmlFor="email">
-          <span className={styles.labelIcon}>✉️</span>
-          Email
+      {/* Email */}
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+          <span className="mr-1">✉️</span> Email
         </label>
-        <div className={styles.inputWrapper}>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            className={errors.email ? styles.inputError : ""}
-          />
-          {errors.email && <div className={styles.error}>{errors.email}</div>}
-        </div>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={onChange}
+          className={`w-full rounded-md bg-gray-800 text-white px-4 py-2 border ${
+            errors.email ? 'border-red-500' : 'border-gray-700'
+          } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+        />
+        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
       </div>
 
-      <div className={styles.formGroup}>
-        <label htmlFor="phone">
-          <span className={styles.labelIcon}>📱</span>
-          Phone Number
+      {/* Phone */}
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
+          <span className="mr-1">📱</span> Phone Number
         </label>
-        <div className={styles.inputWrapper}>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={onChange}
-            className={errors.phone ? styles.inputError : ""}
-          />
-          {errors.phone && <div className={styles.error}>{errors.phone}</div>}
-        </div>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          value={formData.phone}
+          onChange={onChange}
+          className={`w-full rounded-md bg-gray-800 text-white px-4 py-2 border ${
+            errors.phone ? 'border-red-500' : 'border-gray-700'
+          } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+        />
+        {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
       </div>
     </div>
   );

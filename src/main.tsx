@@ -1,29 +1,39 @@
 import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  createBrowserRouter,
-  RouterProvider,
+  BrowserRouter,
+  Routes,
+  Route,
   Navigate,
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import ProtectedRoute from "./components/common/ProtectedRoute.tsx";
-import "./index.css";
-import LoginPage from "./pages/login-page/LoginPage.tsx";
-import authService from "./services/auth";
-import Unauthorized from "./pages/unauthorized/UnAuthorized.tsx";
-import Dashboard from "./pages/dashboard/Dashboard.tsx";
-import Users from "./pages/users/users.tsx";
-import Projects from "./pages/projects/Projects.tsx";
-import Layout from "./components/layout/Layout.tsx";
-import "./assets/colors.css";
-import Settings from "./pages/settings/Settings.tsx";
-import AddUser from "./pages/users/AddUser.tsx";
-import AddProject from "./pages/projects/AddProject.tsx";
-import ProjectPortal from "./pages/projects/ProjectPortal.tsx";
-import NewRegressionRun from "./pages/projects/new-regression/NewRegression.tsx";
+import { StrictMode } from "react";
 
-// Modify LoginRedirect to use initializeAuth
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import Layout from "./components/layout/Layout";
+import authService from "./services/auth";
+
+import LoginPage from "./pages/login-page/LoginPage";
+import Unauthorized from "./pages/unauthorized/UnAuthorized";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Users from "./pages/users/users";
+import AddUser from "./pages/users/AddUser";
+import Projects from "./pages/projects/Projects";
+import AddProject from "./pages/projects/AddProject";
+import ProjectPortal from "./pages/projects/ProjectPortal";
+import ProjectRegression from "./pages/projects/ProjectRegression";
+import ProjectModule from "./pages/projects/ProjectModule";
+import ProjectComponent from "./pages/projects/ProjectComponent";
+import NewRegressionRun from "./pages/projects/new-regression/NewRegression";
+import Settings from "./pages/settings/Settings";
+import Parsers from "./pages/Parsers/Parsers"
+import AddParsers from "./pages/Parsers/NewParser"
+
+import "./index.css";
+import "./assets/colors.css";
+
+// Handles auth check and redirect logic
 const LoginRedirect = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +43,6 @@ const LoginRedirect = () => {
     const checkAuth = async () => {
       const isAuthenticated = await authService.initializeAuth();
       if (isAuthenticated) {
-        // User is logged in, redirect to home or previous location
         navigate("/", { replace: true });
       }
       setIsLoading(false);
@@ -45,100 +54,145 @@ const LoginRedirect = () => {
     return <div>Loading...</div>;
   }
 
-  // If we get here, user is not authenticated
   return <LoginPage />;
 };
 
-const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <LoginRedirect />,
-  },
+// Main App entry with routes
+const App = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginRedirect />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/" element={<Layout />}>
+          <Route
+            index
+            element={
+              <ProtectedRoute
+                element={<Dashboard />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute
+                element={<Users />}
+                allowedRoles={["admin", "manager"]}
+              />
+            }
+          />
+          <Route
+            path="users/add"
+            element={
+              <ProtectedRoute
+                element={<AddUser />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+          <Route
+            path="projects"
+            element={
+              <ProtectedRoute
+                element={<Projects />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="projects/add"
+            element={
+              <ProtectedRoute
+                element={<AddProject />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="projects/:id"
+            element={
+              <ProtectedRoute
+                element={<ProjectPortal />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="projects/:id/regression/:regressionId"
+            element={
+              <ProtectedRoute
+                element={<ProjectRegression />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="projects/:id/regression/:regressionId/module/:moduleId"
+            element={
+              <ProtectedRoute
+                element={<ProjectModule />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="projects/:id/regression/:regressionId/module/:moduleId/component/:componentId"
+            element={
+              <ProtectedRoute
+                element={<ProjectComponent />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="projects/:id/new-regression"
+            element={
+              <ProtectedRoute
+                element={<NewRegressionRun />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="parsers"
+            element={
+              <ProtectedRoute
+                element={<Parsers />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+           <Route
+            path="parsers/add"
+            element={
+              <ProtectedRoute
+                element={< AddParsers/>}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <ProtectedRoute
+                element={<Settings />}
+                allowedRoles={["admin", "manager", "user"]}
+              />
+            }
+          />
+        </Route>
 
-  { path: "/unauthorized", element: <Unauthorized /> },
-
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      {
-        path: "/",
-        element: (
-          <ProtectedRoute
-            element={<Dashboard />}
-            allowedRoles={["admin", "manager", "user"]}
-          />
-        ),
-      },
-      {
-        path: "/users",
-        element: (
-          <ProtectedRoute
-            element={<Users />}
-            allowedRoles={["admin", "manager"]}
-          />
-        ),
-      },
-      {
-        path: "/users/add",
-        element: (
-          <ProtectedRoute element={<AddUser />} allowedRoles={["admin"]} />
-        ),
-      },
-      {
-        path: "/projects",
-        element: (
-          <ProtectedRoute
-            element={<Projects />}
-            allowedRoles={["admin", "manager"]}
-          />
-        ),
-      },
-      {
-        path: "/projects/add",
-        element: (
-          <ProtectedRoute
-            element={<AddProject />}
-            allowedRoles={["admin", "manager"]}
-          />
-        ),
-      },
-      {
-        path: "/projects/:id",
-        element: (
-          <ProtectedRoute
-            element={<ProjectPortal />}
-            allowedRoles={["admin", "manager"]}
-          />
-        ),
-      },
-      {
-        path: "/projects/:id/new-regression",
-        element: (
-          <ProtectedRoute
-            element={<NewRegressionRun />}
-            allowedRoles={["admin", "manager"]}
-          />
-        ),
-      },
-      {
-        path: "/settings",
-        element: (
-          <ProtectedRoute
-            element={<Settings />}
-            allowedRoles={["admin", "manager", "user"]}
-          />
-        ),
-      },
-    ],
-  },
-
-  {
-    path: "*",
-    element: <Navigate to="/" replace />,
-  },
-]);
+        {/* fallback redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
 createRoot(document.getElementById("root")!).render(
-  <RouterProvider router={router} />
+  <StrictMode>
+    <App />
+  </StrictMode>
 );

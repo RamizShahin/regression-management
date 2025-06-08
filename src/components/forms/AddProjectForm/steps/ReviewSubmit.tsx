@@ -1,100 +1,89 @@
 import React from "react";
 import { ProjectFormData } from "../validationSchema";
-import styles from "../AddProjectForm.module.css";
 
 type ReviewSubmitProps = {
   formData: ProjectFormData;
-  // onSubmit: () => void;
   errors: Record<string, string>;
 };
 
-const ReviewSubmit: React.FC<ReviewSubmitProps> = ({
-  formData,
-  // onSubmit,
-  errors,
-}) => {
+const ReviewSubmit: React.FC<ReviewSubmitProps> = ({ formData, errors }) => {
   const hasErrors = Object.keys(errors).length > 0;
 
   return (
-    <div className={styles.stepContainer}>
-      <div className={styles.formSection}>
-        <h3>Review and Submit Project</h3>
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold text-white">Review and Submit Project</h2>
 
         {hasErrors && (
-          <div className={styles.errorSummary}>
-            <h4>Please fix the following errors before submitting:</h4>
-            <ul>
+          <div className="bg-red-800 text-red-100 border border-red-600 rounded-md p-4 space-y-2">
+            <h4 className="font-medium">Please fix the following errors before submitting:</h4>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
               {Object.entries(errors).map(([field, message]) => (
                 <li key={field}>
-                  <strong>
-                    {field
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/^./, (str) => str.toUpperCase())}
-                    :
-                  </strong>{" "}
-                  {message}
+                  <strong className="capitalize">{field.replace(/([A-Z])/g, " $1")}:</strong> {message}
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        <div className={styles.reviewSection}>
-          <h4>Basic Information</h4>
-          <div className={styles.reviewItem}>
-            <span className={styles.reviewLabel}>Project Name:</span>
-            <span className={styles.reviewValue}>{formData.name}</span>
+        {/* Basic Info */}
+        <div className="bg-gray-800 p-4 rounded-md border border-gray-700 space-y-2">
+          <h3 className="text-lg font-medium text-white">Basic Information</h3>
+          <div className="flex flex-col sm:flex-row sm:gap-4 text-sm text-gray-300">
+            <span className="font-medium w-36">Project Name:</span>
+            <span>{formData.name}</span>
           </div>
-          <div className={styles.reviewItem}>
-            <span className={styles.reviewLabel}>Description:</span>
-            <span className={styles.reviewValue}>
-              {formData.description || "No description provided"}
-            </span>
+          <div className="flex flex-col sm:flex-row sm:gap-4 text-sm text-gray-300">
+            <span className="font-medium w-36">Description:</span>
+            <span>{formData.description || "No description provided"}</span>
           </div>
         </div>
 
-        <div className={styles.reviewSection}>
-          <h4>Modules and Components</h4>
+        {/* Modules */}
+        <div className="bg-gray-800 p-4 rounded-md border border-gray-700 space-y-4">
+          <h3 className="text-lg font-medium text-white">Modules and Components</h3>
+
           {formData.modules.length === 0 ? (
-            <div className={styles.emptyState}>No modules defined</div>
+            <p className="text-sm text-gray-400">No modules defined</p>
           ) : (
-            formData.modules.map((module) => (
-              <div key={module.id} className={styles.moduleReviewCard}>
-                <h3 className={styles.moduleReviewName}>{module.name}</h3>
-                <p className={styles.moduleReviewDescription}>
-                  {module.description || "No description provided"}
-                </p>
+            <div className="max-h-72 overflow-y-auto space-y-4 pr-2">
+              {formData.modules.map((module) => (
+                <div
+                  key={module.id}
+                  className="bg-gray-900 rounded-md p-4 border border-gray-700 text-gray-200"
+                >
+                  <h4 className="font-semibold text-white">{module.name}</h4>
+                  <p className="text-sm text-gray-400 mb-2">
+                    {module.description || "No description provided"}
+                  </p>
 
-                <h3>Components:</h3>
-                {module.components.length === 0 ? (
-                  <div className={styles.emptyState}>No components defined</div>
-                ) : (
-                  <ul className={styles.componentReviewList}>
-                    {module.components.map((component) => (
-                      <li
-                        key={component.id}
-                        className={styles.componentReviewItem}
-                      >
-                        <strong>{component.name}</strong>
-                        {component.description && (
-                          <p>{component.description}</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))
+                  <h5 className="text-sm font-medium text-white mb-1">Components:</h5>
+                  {module.components.length === 0 ? (
+                    <p className="text-sm text-gray-500">No components defined</p>
+                  ) : (
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-gray-300">
+                      {module.components.map((component) => (
+                        <li key={component.id}>
+                          <strong>{component.name}</strong>
+                          {component.description && (
+                            <p className="text-gray-400 text-xs">{component.description}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        <div className={styles.submitContainer}>
-          {hasErrors && (
-            <p className={styles.errorMessage}>
-              Please go back to previous steps and fix errors before submitting.
-            </p>
-          )}
-        </div>
+        {hasErrors && (
+          <p className="text-red-400 text-sm text-center">
+            Please go back and fix all errors before submitting.
+          </p>
+        )}
       </div>
     </div>
   );

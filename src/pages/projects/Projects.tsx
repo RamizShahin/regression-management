@@ -1,170 +1,105 @@
-import React, { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  flexRender,
-} from "@tanstack/react-table";
-import styles from "./projects.module.css";
 import authService from "../../services/auth";
+import Table from "../../components/TableWithPaging";
 
-function Projects() {
-  const navigate = useNavigate();
+const Projects = () => {
+  const [data, setData] = useState<any[]>([]);
   const [filter, setFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const navigate = useNavigate();
 
-  const [data, setData] = React.useState([]);
-
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authService.makeAuthenticatedRequest(
-          "/api/projects"
-        );
+        const response = await authService.makeAuthenticatedRequest("/api/projects");
         const jsonData = await response.json();
         setData(jsonData);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching projects:", error);
       }
     };
-
     fetchData();
   }, []);
 
-  // Table Columns
-  const columns = React.useMemo(() => {
-    if (data.length === 0)
-      return [
-        { accessorKey: "project_name", header: "Name" },
-        {
-          accessorKey: "project_description",
-          header: "Description",
-        },
-      ];
+  const filteredData = data.filter((row) =>
+    Object.values(row).some((value) =>
+      String(value).toLowerCase().includes(filter.toLowerCase())
+    )
+  );
 
-    const excludedKeys = ["project_id"]; // keys you want to skip
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
+  const columns = useMemo(() => {
+    if (data.length === 0) return [];
+    const excludedKeys = ["project_id"];
     return Object.keys(data[0])
-      .filter((key) => !excludedKeys.includes(key)) // filter them out
+      .filter((key) => !excludedKeys.includes(key))
       .map((key) => ({
-        accessorKey: key,
+        key,
         header: key.charAt(0).toUpperCase() + key.slice(1),
+        accessor: key,
       }));
   }, [data]);
 
-  // Create Table Instance
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      globalFilter: filter, // Set global filter state
-    },
-    onGlobalFilterChange: setFilter, // Update filter state
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
+  const handleDelete = async (item: any) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete project "${item.project_name}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const response = await authService.makeAuthenticatedRequest(`/api/projects/${item.project_id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setData((prev) => prev.filter((p) => p.project_id !== item.project_id));
+      } else {
+        const errMsg = await response.text();
+        alert("Delete failed: " + errMsg);
+      }
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      alert("An error occurred while deleting the project.");
+    }
+  };
 
   return (
-    <div className={styles.root}>
-      <div className={styles.header}>
-        <div className={styles["search-container"]}>
-          <label className={styles.label1}>Projects</label>
+    <div className="min-h-screen bg-gray-950 text-white px-4 sm:px-6 lg:px-8 py-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <label className="text-lg">Projects</label>
           <input
             type="search"
             placeholder="Search for..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className={styles.search}
+            className="rounded-md bg-gray-800 text-white px-3 py-2 border border-gray-600 focus:outline-none focus:ring focus:ring-purple-500 text-sm"
           />
         </div>
         <button
-          className={styles["btn-addProject"]}
+          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm"
           onClick={() => navigate("/projects/add")}
         >
           Add Project
         </button>
       </div>
-      <div className={styles.table}>
-        <label className={styles.label2}>All Projects</label>
-        <table border={1} cellSpacing="0" cellPadding="">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                    {header.column.getIsSorted() === "asc"
-                      ? " 🔼"
-                      : header.column.getIsSorted() === "desc"
-                      ? " 🔽"
-                      : " ↕"}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className={styles.trow}
-                onClick={() => {
-                  // Safely access project_id if it exists
-                  const projectId = (row.original as { project_id?: string | number })?.project_id;
-                  if (projectId !== undefined) {
-                    navigate(`/projects/${projectId}`);
-                  }
-                }}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className={styles.pagination}>
-        Rows per page:
-        <select
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
-        >
-          {[1, 2, 5, 10].map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              {pageSize}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className={styles["btn-next-prev"]}
-        >
-          &lt;
-        </button>
-        <button
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className={styles["btn-next-prev"]}
-        >
-          &gt;
-        </button>
-      </div>
+
+      <Table
+        columns={columns}
+        data={paginatedData}
+        currentPage={currentPage}
+        totalItems={filteredData.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        getEditLink={(item: any) => `/projects/${item.project_id}`}
+        onDelete={handleDelete}
+      />
     </div>
   );
-}
+};
 
 export default Projects;

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useState, FormEvent } from "react";
 import authService from "../../services/auth";
@@ -86,9 +86,9 @@ function LoginPage() {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <a href="#" className="text-indigo-600 hover:text-indigo-500 font-medium">
-              Forgot your password?
-            </a>
+           <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-500 font-medium">
+                Forgot your password?
+            </Link>
           </div>
 
           <div>

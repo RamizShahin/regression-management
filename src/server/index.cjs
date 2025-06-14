@@ -8,7 +8,8 @@ const usersRoutes = require("./routes/users.cjs");
 const projectsRoutes = require("./routes/projects.cjs");
 const profileRoutes = require("./routes/profile.cjs");
 const addRegressionRoutes = require("./routes/addregression.cjs");
-const regressionsRoutes = require("./routes/regressions.cjs");
+const projectRegressionsRoutes = require("./routes/projectregressions.cjs");
+const regressionRoutes = require("./routes/regression.cjs");
 const { verifyToken } = require("./middleware/auth.cjs");
 const cookieParser = require("cookie-parser");
 
@@ -31,7 +32,8 @@ app.use("/api/users", usersRoutes);
 app.use("/api/projects", projectsRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/upload-regression", addRegressionRoutes);
-app.use("/api/regressions", regressionsRoutes);
+app.use("/api/regressions", projectRegressionsRoutes);
+app.use("/api/regression", regressionRoutes);
 
 const PORT = 3001;
 app.listen(PORT, () => {

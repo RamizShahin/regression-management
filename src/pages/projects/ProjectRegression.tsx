@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import LineChart from "../../components/LineChart";
 import InfoBox from "../../components/InfoBox";
@@ -7,26 +7,18 @@ import Table, { type Column } from "../../components/TableWithPaging";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import authService from "../../services/auth";
 
-type ModuleRow = {
-  id: number;
-  name: string;
-  componentCount: number;
-  makeDate: string;
-  lastRegressionDate: string;
-};
-
-type TestCaseRow = {
-  name: string;
-  moduleName: string;
-  error: string;
-};
-
 export default function ProjectRegression() {
-  const { id: rawProjectId, regressionId } = useParams<{ id: string; regressionId: string }>();
+  const { id: rawProjectId, regressionId } = useParams<{
+    id: string;
+    regressionId: string;
+  }>();
   const projectId = rawProjectId?.trim();
-  console.warn("project id = ", projectId);
+  // console.warn("project id = ", projectId);
   const [projectName, setProjectName] = useState("Loading...");
   const [currentPage, setCurrentPage] = useState(1);
+  const [regression, setRegression] = useState<any>("");
+  const [errors, setErrors] = useState<any[]>([]);
+  const [modules, setModules] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -36,7 +28,9 @@ export default function ProjectRegression() {
       }
 
       try {
-        const response = await authService.makeAuthenticatedRequest(`/api/projects/${projectId}`);
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/projects/${projectId}`
+        );
         if (!response.ok) throw new Error("Failed to fetch project");
         const data = await response.json();
         setProjectName(data.project_name || "Project");
@@ -48,41 +42,114 @@ export default function ProjectRegression() {
     fetchProject();
   }, [projectId]);
 
-  const moduleColumns: Column<ModuleRow>[] = [
-    { key: "name", header: "Module Name", accessor: "name" },
-    { key: "componentCount", header: "Components", accessor: "componentCount" },
-    { key: "makeDate", header: "Created On", accessor: "makeDate" },
-    { key: "lastRegressionDate", header: "Last Regression", accessor: "lastRegressionDate" },
-  ];
+  useEffect(() => {
+    const fetchRegression = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}`
+        );
+        const regression = await response.json();
 
-  const moduleData: ModuleRow[] = [
-    { id: 1, name: "Auth Module", componentCount: 5, makeDate: "2025-03-01", lastRegressionDate: "2025-06-04" },
-    { id: 2, name: "Reporting Module", componentCount: 8, makeDate: "2025-02-15", lastRegressionDate: "2025-05-28" },
-    { id: 3, name: "Logging Module", componentCount: 3, makeDate: "2025-01-20", lastRegressionDate: "2025-04-30" },
-  ];
+        const date = new Date(regression.execution_date);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-  const testCaseColumns: Column<TestCaseRow>[] = [
-    { key: "name", header: "Test Name", accessor: "name" },
-    { key: "moduleName", header: "Module", accessor: "moduleName" },
-    { key: "error", header: "Error", accessor: "error" },
-  ];
+        regression.execution_date = formattedDate;
+        setRegression(regression);
+      } catch (error) {
+        setRegression(null);
+      }
+    };
 
-  const testCaseData: TestCaseRow[] = [
-    { name: "LoginTest", moduleName: "Login", error: "Failed" },
-    { name: "LogoutTest", moduleName: "DB", error: "Unknown" },
-    { name: "ReportExportTest", moduleName: "DB", error: "Failed" },
-    { name: "LogCleanupTest", moduleName: "Clean up", error: "Unknown" },
-  ];
+    const fetchErrors = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}/errors`
+        );
+        const errors = await response.json();
 
-  const series = [
-    { name: "Passed", data: [10, 15, 20, 25, 30, 5, 10, 15, 20, 25] },
-    { name: "Failed", data: [5, 10, 15, 20, 25, 2, 7, 12, 17, 22] },
-    { name: "Unknown", data: [2, 7, 12, 17, 22, 10, 15, 20, 25, 30] },
-  ];
+        setErrors(errors);
+      } catch (error) {
+        setErrors([]);
+      }
+    };
 
-  const categories = [
-    "#1", "#2", "#3", "#4", "#5",
-    "#6", "#7", "#8", "#9", "#10",
+    const fetchModules = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}/modules`
+        );
+        const data = await response.json();
+
+        const cleanedData = data.map((row: any) => {
+          const date = new Date(row.LastRegressionDate);
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, "0");
+          const dd = String(date.getDate()).padStart(2, "0");
+          const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+          return {
+            ...row,
+            LastRegressionDate: formattedDate,
+          };
+        });
+
+        setModules(cleanedData);
+      } catch (error) {
+        setModules([]);
+      }
+    };
+
+    fetchErrors();
+    fetchRegression();
+    fetchModules();
+  }, [projectId, regressionId]);
+
+  const errorsHeaderMap: Record<string, string> = {
+    test_name: "Name",
+    module_name: "Module",
+    status: "Error",
+  };
+
+  const errorColumns = useMemo(() => {
+    if (errors.length === 0) return [];
+
+    const dynamicColumns = Object.keys(errors[0]).map((key) => ({
+      key,
+      header: errorsHeaderMap[key],
+      accessor: key,
+    }));
+
+    return dynamicColumns;
+  }, [errors]);
+
+  const modulesHeaderMap: Record<string, string> = {
+    module_name: "Module Name",
+    ComponentCount: "Components",
+    LastRegressionDate: "Last Regression",
+  };
+
+  const moduleColumns = useMemo(() => {
+    if (modules.length === 0) return [];
+
+    const excludedKeys = ["module_id"];
+    const dynamicColumns = Object.keys(modules[0])
+      .filter((key) => !excludedKeys.includes(key))
+      .map((key) => ({
+        key,
+        header: modulesHeaderMap[key],
+        accessor: key,
+      }));
+
+    return dynamicColumns;
+  }, [modules]);
+
+  const outcomeTotals = [
+    regression.passed || 0,
+    regression.failed || 0,
+    regression.unknown || 0,
   ];
 
   return (
@@ -90,7 +157,10 @@ export default function ProjectRegression() {
       {/* Breadcrumb */}
       <div className="mb-7">
         <nav aria-label="Back" className="sm:hidden">
-          <Link to={`/projects/${projectId}`} className="flex items-center text-sm font-medium text-gray-400 hover:text-gray-200">
+          <Link
+            to={`/projects/${projectId}`}
+            className="flex items-center text-sm font-medium text-gray-400 hover:text-gray-200"
+          >
             <ChevronLeftIcon className="mr-1 -ml-1 size-5 shrink-0 text-gray-500" />
             Back
           </Link>
@@ -100,7 +170,10 @@ export default function ProjectRegression() {
           <ol className="flex items-center space-x-4">
             <li>
               <div className="flex">
-                <Link to={`/projects/${projectId}`} className="text-sm font-medium text-gray-400 hover:text-gray-200">
+                <Link
+                  to={`/projects/${projectId}`}
+                  className="text-sm font-medium text-gray-400 hover:text-gray-200"
+                >
                   {projectName}
                 </Link>
               </div>
@@ -119,71 +192,75 @@ export default function ProjectRegression() {
 
       {/* Info & Charts */}
       <div className="m-auto mb-5 flex flex-col lg:flex-row gap-4">
-        <div className="w-full lg:w-1/3">
+        <div className="w-full lg:w-2/4">
           <InfoBox
             title="Regression Info"
             rows={[
-              { label: "Name", value: `Full Regression ${regressionId}` },
-              { label: "Execution Date", value: "2025-03-15 10:32" },
-              { label: "Status", value: "In Progress" },
+              { label: "Name", value: regression.run_name || "missing name" },
+              { label: "Execution Date", value: regression.execution_date },
+              {
+                label: "Status",
+                value:
+                  regression.failed > 0
+                    ? "FAIL"
+                    : regression.unknown > 0
+                    ? "UNKOWN"
+                    : "PASS",
+              },
             ]}
             buttonText="Run Regression Modules"
             onButtonClick={() => alert("Running Modules...")}
           />
         </div>
 
-        <div className="w-full lg:w-2/3">
-          <LineChart
-            title="Regression Modules’ Outputs"
-            series={series}
-            categories={categories}
-            onDateChange={(from, to) => console.log(`Changed: ${from} to ${to}`)}
-            defaultFromDate="2025-05-20"
-            defaultToDate="2025-05-27"
-          />
+        <div className="w-full lg:w-2/4">
+          {regression ? (
+            <RadialChart
+              title="Test Case Outcomes"
+              series={outcomeTotals}
+              labels={["Succeeded", "Failed", "Unknown"]}
+            />
+          ) : (
+            <div className="text-gray-400">Loading chart data...</div>
+          )}
         </div>
       </div>
 
       {/* Charts */}
-      <div className="m-auto flex flex-col lg:flex-row gap-4">
-        <div className="w-full lg:w-2/3 flex flex-col">
-          <div className="rounded-2xl shadow-md bg-gray-900 p-6 flex-grow">
-            <h2 className="text-lg font-semibold text-white mb-4">Failed/Unknown Test Cases</h2>
-            <Table
-              columns={testCaseColumns}
-              data={testCaseData.slice((currentPage - 1) * 5, currentPage * 5)}
-              currentPage={currentPage}
-              totalItems={testCaseData.length}
-              pageSize={5}
-              onPageChange={setCurrentPage}
-              getEditLink={() => ""}
-            />
-          </div>
-        </div>
-
-        <div className="w-full lg:w-1/3">
-          <RadialChart
-            title="Regression Task Status"
-            series={[50, 40, 10]}
-            labels={["Succeeded", "Failed", "Unknown"]}
+      <div className="rounded-2xl shadow-md bg-gray-900 p-6 flex-grow">
+        <h2 className="text-lg font-semibold text-white mb-4">
+          Failed/Unknown Test Cases
+        </h2>
+        {errors.length > 0 ? (
+          <Table
+            columns={errorColumns}
+            data={errors.slice((currentPage - 1) * 5, currentPage * 5)}
+            currentPage={currentPage}
+            totalItems={errors.length}
+            pageSize={5}
+            onPageChange={setCurrentPage}
+            getEditLink={() => ""}
           />
-        </div>
+        ) : (
+          <div className="text-gray-400 text-center">no data</div>
+        )}
       </div>
-
 
       {/* Modules Table */}
       <div className="m-auto mt-6 rounded-2xl shadow-md bg-gray-900 p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Modules</h2>
         <Table
           columns={moduleColumns}
-          data={moduleData.slice((currentPage - 1) * 5, currentPage * 5)}
+          data={modules.slice((currentPage - 1) * 5, currentPage * 5)}
           currentPage={currentPage}
-          totalItems={moduleData.length}
+          totalItems={modules.length}
           pageSize={5}
           onPageChange={setCurrentPage}
           onEdit={(item) => alert(`Edit module: ${item.name}`)}
           onDelete={(item) => alert(`Delete module: ${item.name}`)}
-          getEditLink={(item) => `/projects/${projectId}/regression/${regressionId}/module/${item.id}`}
+          getEditLink={(item) =>
+            `/projects/${projectId}/regression/${regressionId}/module/${item.module_id}`
+          }
         />
       </div>
     </div>

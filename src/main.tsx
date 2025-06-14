@@ -32,6 +32,7 @@ import AddParsers from "./pages/Parsers/NewParser"
 
 import "./index.css";
 import "./assets/colors.css";
+import ForgotPassword from "./pages/forgot-password/ForgotPassword";
 
 // Handles auth check and redirect logic
 const LoginRedirect = () => {
@@ -63,6 +64,7 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginRedirect />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/" element={<Layout />}>
           <Route

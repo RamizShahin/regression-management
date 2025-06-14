@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import LineChart from "../../components/LineChart";
 import InfoBox from "../../components/InfoBox";
 import RadialChart from "../../components/RadialChart";
-import Table, { type Column } from "../../components/TableWithPaging";
+import Table from "../../components/TableWithPaging";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import authService from "../../services/auth";
 

@@ -20,8 +20,8 @@ const AreaChart: React.FC<AreaChartProps> = ({
   defaultFrom = "2023-06",
   defaultTo = "2026-04",
 }) => {
-  const [fromMonth, setFromMonth] = useState(defaultFrom);
-  const [toMonth, setToMonth] = useState(defaultTo);
+  const [fromMonth, setFromMonth] = useState(defaultFrom || "");
+  const [toMonth, setToMonth] = useState(defaultTo || "");
 
   useEffect(() => {
     if (fromMonth && toMonth) {
@@ -106,8 +106,23 @@ const AreaChart: React.FC<AreaChartProps> = ({
       </div>
 
       <p className="text-sm text-gray-400 mb-2">
-        Showing data from <strong>{formatMonth(fromMonth)}</strong> to{" "}
-        <strong>{formatMonth(toMonth)}</strong>
+        Showing data{" "}
+        {fromMonth && toMonth ? (
+          <>
+            from <strong>{formatMonth(fromMonth)}</strong> to{" "}
+            <strong>{formatMonth(toMonth)}</strong>
+          </>
+        ) : fromMonth ? (
+          <>
+            From <strong>{formatMonth(fromMonth)}</strong>
+          </>
+        ) : toMonth ? (
+          <>
+            Until <strong>{formatMonth(toMonth)}</strong>
+          </>
+        ) : (
+          <strong>for All dates</strong>
+        )}
       </p>
 
       <ReactApexChart

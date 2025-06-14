@@ -13,7 +13,9 @@ const Projects = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await authService.makeAuthenticatedRequest("/api/projects");
+        const response = await authService.makeAuthenticatedRequest(
+          "/api/projects"
+        );
         const jsonData = await response.json();
         setData(jsonData);
       } catch (error) {
@@ -47,13 +49,18 @@ const Projects = () => {
   }, [data]);
 
   const handleDelete = async (item: any) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete project "${item.project_name}"?`);
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete project "${item.project_name}"?`
+    );
     if (!confirmDelete) return;
 
     try {
-      const response = await authService.makeAuthenticatedRequest(`/api/projects/${item.project_id}`, {
-        method: "DELETE",
-      });
+      const response = await authService.makeAuthenticatedRequest(
+        `/api/projects/${item.project_id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         setData((prev) => prev.filter((p) => p.project_id !== item.project_id));
@@ -65,6 +72,10 @@ const Projects = () => {
       console.error("Error deleting project:", error);
       alert("An error occurred while deleting the project.");
     }
+  };
+
+  const handleEdit = (item: any) => {
+    navigate(`/projects/${item.project_id}`);
   };
 
   return (
@@ -97,6 +108,7 @@ const Projects = () => {
         onPageChange={setCurrentPage}
         getEditLink={(item: any) => `/projects/${item.project_id}`}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
     </div>
   );

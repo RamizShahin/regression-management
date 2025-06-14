@@ -29,10 +29,23 @@ const RadialChart: React.FC<RadialChartProps> = ({
 
   const generateColors = (count: number) => {
     const baseColors = [
-      "#1C64F2", "#16BDCA", "#FDBA8C", "#F43F5E", "#10B981", "#8B5CF6", "#F59E0B",
+      "#1C64F2",
+      "#16BDCA",
+      "#FDBA8C",
+      "#F43F5E",
+      "#10B981",
+      "#8B5CF6",
+      "#F59E0B",
     ];
-    return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length]);
+    return Array.from(
+      { length: count },
+      (_, i) => baseColors[i % baseColors.length]
+    );
   };
+
+  const total = series.reduce((sum, val) => sum + val, 0);
+  const percentages =
+    total > 0 ? series.map((val) => (val / total) * 100) : series.map(() => 0);
 
   const options: ApexOptions = {
     series,
@@ -82,6 +95,11 @@ const RadialChart: React.FC<RadialChartProps> = ({
     tooltip: {
       enabled: true,
       x: { show: false },
+      y: {
+        formatter: (_val, opts) => {
+          return `${series[opts.seriesIndex]}`;
+        },
+      },
     },
     grid: {
       show: false,
@@ -93,7 +111,7 @@ const RadialChart: React.FC<RadialChartProps> = ({
       <h2 className="text-lg font-semibold text-white mb-4">{title}</h2>
       <ReactApexChart
         options={options}
-        series={series}
+        series={percentages}
         type="radialBar"
         height={chartHeight}
       />

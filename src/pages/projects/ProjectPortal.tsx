@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LineChart from "../../components/LineChart";
 import AreaChart from "../../components/AreaChart";
@@ -7,24 +7,18 @@ import RadialChart from "../../components/RadialChart";
 import Table, { type Column } from "../../components/TableWithPaging";
 import authService from "../../services/auth";
 
-type RegressionRow = {
-  id: number;
-  name: string;
-  dateOfRun: string;
-  totalTests: number;
-  passedTests: number;
-  failedTests: number;
-  unknownTests: number;
-  successRate: string;
-  runtime: string;
-};
-
 export default function ProjectPortal() {
   const { id: rawProjectId } = useParams<{ id: string }>();
   const projectId = rawProjectId?.trim();
   const [currentPage, setCurrentPage] = useState(1);
   const [projectName, setProjectName] = useState("Loading...");
-  const [selectedMonth, setSelectedMonth] = useState("2025-06");
+  const [selectedMonth, setSelectedMonth] = useState<string>();
+  const [regressions, setRegressions] = useState<any[]>([]);
+  const [projectTeam, setProjectTeam] = useState<any[]>([]);
+  const [lineChartFromDate, setLineChartFromDate] = useState<string>();
+  const [lineChartToDate, setLineChartToDate] = useState<string>();
+  const [areaChartFromDate, setAreaChartFromDate] = useState<string>();
+  const [areaChartToDate, setAreaChartToDate] = useState<string>();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,7 +30,9 @@ export default function ProjectPortal() {
           return;
         }
 
-        const response = await authService.makeAuthenticatedRequest(`/api/projects/${projectId}`);
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/projects/${projectId}`
+        );
         if (!response.ok) {
           console.error("Failed to fetch project:", await response.text());
           setProjectName("Unknown Project");
@@ -54,62 +50,149 @@ export default function ProjectPortal() {
     fetchProject();
   }, [projectId]);
 
-  const series = [
-    { name: "Passed", data: [10, 15, 20, 25, 30, 5, 10, 15, 20, 25] },
-    { name: "Failed", data: [5, 10, 15, 20, 25, 2, 7, 12, 17, 22] },
-    { name: "Unknown", data: [2, 7, 12, 17, 22, 10, 15, 20, 25, 30] },
-  ];
+  // fetching all regression runs
+  useEffect(() => {
+    const fetchRegressions = async () => {
+      const response = await authService.makeAuthenticatedRequest(
+        `/api/regressions/project/${projectId}`
+      );
+      const data = await response.json();
 
-  const categories = ["#1", "#2", "#3", "#4", "#5", "#6", "#7", "#8", "#9", "#10"];
+      const cleanedData = data.map((row: any) => {
+        const date = new Date(row.execution_date);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-  const regColumns: Column<RegressionRow>[] = [
-    { key: "name", header: "Regression Name", accessor: "name" },
-    { key: "dateOfRun", header: "Execution Date", accessor: "dateOfRun" },
-    { key: "totalTests", header: "Total Tests", accessor: "totalTests" },
-    { key: "passedTests", header: "Passed", accessor: "passedTests" },
-    { key: "failedTests", header: "Failed", accessor: "failedTests" },
-    { key: "unknownTests", header: "Unknown", accessor: "unknownTests" },
-    { key: "successRate", header: "Success Rate", accessor: "successRate" },
-    { key: "runtime", header: "Runtime", accessor: "runtime" },
-  ];
+        return {
+          ...row,
+          execution_date: formattedDate,
+          successRate:
+            row.total_tests > 0
+              ? `${((row.passed / row.total_tests) * 100).toFixed(2)}%`
+              : "0%",
+        };
+      });
 
-  const regData: RegressionRow[] = [
-    {
-      id: 1,
-      name: "Regression A",
-      dateOfRun: "2025-06-01",
-      totalTests: 100,
-      passedTests: 92,
-      failedTests: 5,
-      unknownTests: 3,
-      successRate: "92%",
-      runtime: "5m 30s",
-    },
-    {
-      id: 2,
-      name: "Regression B",
-      dateOfRun: "2025-06-04",
-      totalTests: 80,
-      passedTests: 70,
-      failedTests: 7,
-      unknownTests: 3,
-      successRate: "87.5%",
-      runtime: "4m 45s",
-    },
-  ];
+      setRegressions(cleanedData);
+    };
 
-  const handleEdit = (item: RegressionRow) => {
-    navigate(`/projects/${projectId}/regression/${item.id}`);
+    const fetchProjectTeam = async () => {
+      const response = await authService.makeAuthenticatedRequest(
+        `/api/regressions/project/${projectId}/team`
+      );
+      const data = await response.json();
+
+      const cleanedData = data.map((row: any) => ({
+        ...row,
+        role: row.role.charAt(0).toUpperCase() + row.role.slice(1),
+      }));
+
+      setProjectTeam(cleanedData);
+    };
+    fetchProjectTeam();
+    fetchRegressions();
+  }, [projectId]);
+
+  const { lineChartSeries, lineChartCategories } = useMemo(() => {
+    const grouped: Record<
+      string,
+      { passed: number; failed: number; unknown: number }
+    > = {};
+
+    regressions.forEach((regression) => {
+      const date = regression.execution_date;
+
+      if (lineChartFromDate && date < lineChartFromDate) return;
+      if (lineChartToDate && date > lineChartToDate) return;
+
+      if (!grouped[date]) {
+        grouped[date] = { passed: 0, failed: 0, unknown: 0 };
+      }
+
+      grouped[date].passed += regression.passed || 0;
+      grouped[date].failed += regression.failed || 0;
+      grouped[date].unknown += regression.unknown || 0;
+    });
+
+    const sortedMonths = Object.keys(grouped).sort();
+    const lineChartCategories = sortedMonths;
+
+    const passedData = sortedMonths.map((date) => grouped[date].passed);
+    const failedData = sortedMonths.map((date) => grouped[date].failed);
+    const unknownData = sortedMonths.map((date) => grouped[date].unknown);
+
+    const lineChartSeries = [
+      { name: "Passed", data: passedData },
+      { name: "Failed", data: failedData },
+      { name: "Unknown", data: unknownData },
+    ];
+
+    return { lineChartSeries, lineChartCategories };
+  }, [regressions, lineChartFromDate, lineChartToDate]);
+
+  const { areaChartSeries, areaChartCategories } = useMemo(() => {
+    const grouped: Record<string, number> = {};
+
+    regressions.forEach((regression) => {
+      const date = regression.execution_date.slice(0, 7);
+
+      if (areaChartFromDate && date < areaChartFromDate) return;
+      if (areaChartToDate && date > areaChartToDate) return;
+
+      if (!grouped[date]) {
+        grouped[date] = 0;
+      }
+
+      grouped[date] += regression.total_tests || 0;
+    });
+
+    const sortedMonths = Object.keys(grouped).sort();
+    const areaChartCategories = sortedMonths;
+    const areaChartSeries = sortedMonths.map((date) => grouped[date]);
+
+    return { areaChartSeries, areaChartCategories };
+  }, [regressions, areaChartFromDate, areaChartToDate]);
+
+  const regColumns = useMemo(() => {
+    if (regressions.length === 0) return [];
+
+    const excludedKeys = ["run_id", "project_id"];
+    const dynamicColumns = Object.keys(regressions[0])
+      .filter((key) => !excludedKeys.includes(key))
+      .map((key) => ({
+        key,
+        header: key.charAt(0).toUpperCase() + key.slice(1),
+        accessor: key,
+      }));
+
+    return dynamicColumns;
+  }, [regressions]);
+
+  const filteredRegressions = useMemo(() => {
+    if (!selectedMonth) return regressions;
+
+    return regressions.filter(
+      (r) => r.execution_date.slice(0, 7) === selectedMonth
+    );
+  }, [regressions, selectedMonth]);
+
+  const handleLineChartDateChange = (from: string, to: string) => {
+    setLineChartFromDate(from);
+    setLineChartToDate(to);
   };
 
-
-  const handleDelete = (item: RegressionRow) => {
-    alert(`Delete clicked for: ${item.name}`);
+  const handleAreaChartDateChange = (from: string, to: string) => {
+    setAreaChartFromDate(from);
+    setAreaChartToDate(to);
   };
 
-  const handleDateChange = (from: string, to: string) => {
-    console.log(`Date range changed from ${from} to ${to}`);
-  };
+  const outcomeTotals = [
+    regressions.reduce((sum, r) => sum + (r.passed || 0), 0),
+    regressions.reduce((sum, r) => sum + (r.failed || 0), 0),
+    regressions.reduce((sum, r) => sum + (r.unknown || 0), 0),
+  ];
 
   return (
     <div className="p-6">
@@ -118,7 +201,9 @@ export default function ProjectPortal() {
           <ol role="list" className="flex items-center space-x-4">
             <li>
               <div className="flex items-center">
-                <span className="ml-4 text-sm font-medium text-gray-400">{projectName}</span>
+                <span className="ml-4 text-sm font-medium text-gray-400">
+                  {projectName}
+                </span>
               </div>
             </li>
           </ol>
@@ -127,20 +212,24 @@ export default function ProjectPortal() {
 
       <div className="m-auto mb-5 flex flex-col lg:flex-row gap-4">
         <div className="w-full lg:w-1/3">
-          <RadialChart
-            title="Test Case Outcomes"
-            series={[50, 40, 10]}
-            labels={["Succeeded", "Failed", "Unknown"]}
-          />
+          {regressions.length === 0 ? (
+            <div className="text-gray-400">Loading chart data...</div>
+          ) : (
+            <RadialChart
+              title="Test Case Outcomes"
+              series={outcomeTotals}
+              labels={["Succeeded", "Failed", "Unknown"]}
+            />
+          )}
         </div>
         <div className="w-full lg:w-2/3">
           <LineChart
             title="Tests per month"
-            series={series}
-            categories={categories}
-            onDateChange={handleDateChange}
-            defaultFromDate="2025-05-20"
-            defaultToDate="2025-05-27"
+            series={lineChartSeries}
+            categories={lineChartCategories}
+            onDateChange={handleLineChartDateChange}
+            defaultFromDate=""
+            defaultToDate=""
           />
         </div>
       </div>
@@ -150,31 +239,19 @@ export default function ProjectPortal() {
           <AreaChart
             title="Test Over Time"
             series={[
-              { name: "Tests", data: [50, 70, 90, 80, 100, 110, 90, 75, 95, 100] }
+              {
+                name: "Tests",
+                data: areaChartSeries,
+              },
             ]}
-            categories={[
-              "Jun 2023", "Jul 2023", "Aug 2023", "Sep 2023", "Oct 2023",
-              "Nov 2023", "Dec 2023", "Jan 2024", "Feb 2024", "Mar 2024"
-            ]}
-            onDateChange={(from, to) => {
-              console.log("Selected:", from, "to", to);
-              // in future: fetch from backend by month range
-            }}
-            defaultFrom="2023-06"
-            defaultTo="2024-03"
+            categories={areaChartCategories}
+            onDateChange={handleAreaChartDateChange}
+            defaultFrom=""
+            defaultTo=""
           />
         </div>
         <div className="w-full lg:w-1/3">
-          <TeamCard
-            title="Assigned Team"
-            members={[
-              { name: "John Carter", email: "john@example.com", role: "User" },
-              { name: "Sophie Moore", email: "sophie@example.com", role: "Manager" },
-              { name: "Matt Cannon", email: "matt@example.com", role: "Admin" },
-              { name: "Ansam Rihan", email: "ansam@example.com", role: "Admin" },
-              { name: "Ramiz Shahin", email: "ramiz@example.com", role: "Admin" },
-            ]}
-          />
+          <TeamCard title="Assigned Team" members={projectTeam} />
         </div>
       </div>
 
@@ -196,18 +273,29 @@ export default function ProjectPortal() {
             </button>
           </div>
         </div>
+        {filteredRegressions.length > 0 ? (
           <Table
             columns={regColumns}
-            data={regData.slice((currentPage - 1) * 5, currentPage * 5)}
+            data={filteredRegressions.slice(
+              (currentPage - 1) * 5,
+              currentPage * 5
+            )}
             currentPage={currentPage}
-            totalItems={regData.length}
+            totalItems={regressions.length}
             pageSize={5}
             onPageChange={setCurrentPage}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            getEditLink={(item) => `/projects/${projectId}/regression/${item.id}`}
+            onEdit={(item) =>
+              navigate(`/projects/${projectId}/regression/${item.run_id}`)
+            }
+            onDelete={(item) => alert(`Delete clicked for: ${item.run_id}`)}
+            getEditLink={(item) =>
+              `/projects/${projectId}/regression/${item.run_id}`
+            }
           />
-        </div>
+        ) : (
+          <div className="text-gray-400 text-center">no data</div>
+        )}
+      </div>
     </div>
   );
 }

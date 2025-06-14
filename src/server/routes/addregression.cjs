@@ -77,6 +77,46 @@ router.post("/", upload.array("logs"), async (req, res) => {
   }
 });
 
-router.post("/json", async (req, res) => {});
+router.post("/json", async (req, res) => {
+  const {
+    runId,
+    numOfTotal,
+    numOfFailed,
+    numOfPassed,
+    numOfUnknown,
+    parsedLogs,
+  } = req.body;
+  const [result] = await db.query(
+    `
+      UPDATE regression_runs SET total_tests = ?, passed = ?, failed = ?, unknown = ? WHERE run_id = ?
+    `,
+    [numOfTotal, numOfPassed, numOfFailed, numOfUnknown, runId]
+  );
+
+  for (const log of parsedLogs) {
+    const { test_name, test_command, owner, component, status, summary } = log;
+    const [result] = await db.query(
+      `INSERT INTO test_cases (run_id, test_name, test_command, owner_id, component_id, status)
+      SELECT ?, ?, ?, up.user_id, c.component_id, ?
+      FROM components c
+      JOIN modules m ON c.module_id = m.module_id
+      JOIN user_project up ON up.project_id = m.project_id
+      JOIN users u ON u.user_id = up.user_id
+      WHERE c.component_name = ? AND u.name = ?`,
+      [runId, test_name, test_command, status, component, owner]
+    );
+
+    const test_id = result.insertId;
+    const { identified_errors } = summary;
+    for (const identified_error of identified_errors) {
+      const [result] = await db.query(
+        `INSERT INTO errors (test_id, error_message) VALUES (?, ?)`,
+        [test_id, identified_error]
+      );
+    }
+  }
+
+  res.status(200).json({ message: "Regression run updated successfully" });
+});
 
 module.exports = router;

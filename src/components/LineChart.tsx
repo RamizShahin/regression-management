@@ -14,8 +14,16 @@ interface LineChartProps {
 
 const generateColors = (count: number) => {
   const baseColors = [
-    "#3b82f6", "#ec4899", "#22d3ee", "#facc15", "#10b981",
-    "#a855f7", "#f97316", "#ef4444", "#14b8a6", "#8b5cf6"
+    "#3b82f6",
+    "#ec4899",
+    "#22d3ee",
+    "#facc15",
+    "#10b981",
+    "#a855f7",
+    "#f97316",
+    "#ef4444",
+    "#14b8a6",
+    "#8b5cf6",
   ];
   const colors: string[] = [];
 
@@ -34,8 +42,8 @@ const LineChart: React.FC<LineChartProps> = ({
   defaultFromDate,
   defaultToDate,
 }) => {
-  const [fromDate, setFromDate] = useState(defaultFromDate || "2025-05-20");
-  const [toDate, setToDate] = useState(defaultToDate || "2025-05-27");
+  const [fromDate, setFromDate] = useState(defaultFromDate || "");
+  const [toDate, setToDate] = useState(defaultToDate || "");
 
   useEffect(() => {
     onDateChange(fromDate, toDate);
@@ -119,9 +127,23 @@ const LineChart: React.FC<LineChartProps> = ({
       </div>
 
       <p className="text-sm text-gray-400 mb-2">
-        Showing data from{" "}
-        <strong>{format(new Date(fromDate), "MMM d, yyyy")}</strong> to{" "}
-        <strong>{format(new Date(toDate), "MMM d, yyyy")}</strong>
+        Showing data{" "}
+        {fromDate && toDate ? (
+          <>
+            from <strong>{format(new Date(fromDate), "MMM d, yyyy")}</strong> to{" "}
+            <strong>{format(new Date(toDate), "MMM d, yyyy")}</strong>
+          </>
+        ) : fromDate ? (
+          <>
+            From <strong>{format(new Date(fromDate), "MMM d, yyyy")}</strong>
+          </>
+        ) : toDate ? (
+          <>
+            Until <strong>{format(new Date(toDate), "MMM d, yyyy")}</strong>
+          </>
+        ) : (
+          <strong>for All dates</strong>
+        )}
       </p>
 
       <ReactApexChart

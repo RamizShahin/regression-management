@@ -11,6 +11,7 @@ const addRegressionRoutes = require("./routes/addregression.cjs");
 const projectRegressionsRoutes = require("./routes/projectregressions.cjs");
 const regressionRoutes = require("./routes/regression.cjs");
 const regressionModuleRoutes = require("./routes/regressionmodule.cjs");
+const regressionComponentRoutes = require("./routes/regressioncomponent.cjs");
 const { verifyToken } = require("./middleware/auth.cjs");
 const cookieParser = require("cookie-parser");
 
@@ -36,6 +37,10 @@ app.use("/api/upload-regression", addRegressionRoutes);
 app.use("/api/regressions", projectRegressionsRoutes);
 app.use("/api/regression", regressionRoutes);
 app.use("/api/regression/:regressionId/module", regressionModuleRoutes);
+app.use(
+  "/api/regression/:regressionId/module/:moduleId/component",
+  regressionComponentRoutes
+);
 
 const PORT = 3001;
 app.listen(PORT, () => {

@@ -19,8 +19,8 @@ router.get("/:moduleId", verifyToken, async (req, res) => {
             where c2.module_id = m.module_id
         ) as LastRegDate,
         SUM(CASE WHEN tc.status = 'PASS' THEN 1 ELSE 0 END) AS passed,
-		SUM(CASE WHEN tc.status = 'FAIL' THEN 1 ELSE 0 END) AS failed,
-		SUM(CASE WHEN tc.status = 'UNKNOWN' THEN 1 ELSE 0 END) AS unknown
+        SUM(CASE WHEN tc.status = 'FAIL' THEN 1 ELSE 0 END) AS failed,
+        SUM(CASE WHEN tc.status = 'UNKNOWN' THEN 1 ELSE 0 END) AS unknown
         from modules m
         join components c on c.module_id = m.module_id
         join test_cases tc on tc.component_id = c.component_id
@@ -63,7 +63,7 @@ router.get("/:moduleId/errors", verifyToken, async (req, res) => {
   try {
     const [result] = await db.query(
       `
-          select tc.test_name, m.module_name, tc.status from test_cases as tc
+          select tc.test_name, c.component_name, tc.status from test_cases as tc
           join components as c on tc.component_id = c.component_id
           join modules as m on m.module_id = c.module_id
           where tc.run_id = ? and m.module_id = ? and (tc.status = 'FAIL' or tc.status = 'UNKNOWN')

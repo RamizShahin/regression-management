@@ -3,21 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import InfoBox from "../../components/InfoBox";
 import RadialChart from "../../components/RadialChart";
 import PieChart from "../../components/PieChart";
-import Table, { type Column } from "../../components/TableWithPaging";
+import Table from "../../components/TableWithPaging";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import authService from "../../services/auth";
-
-type ComponentRow = {
-  id: number;
-  name: string;
-  owner: string;
-  lastRunDate: string;
-};
-
-type TestCaseRow = {
-  name: string;
-  error: string;
-};
 
 export default function ProjectModule() {
   const {
@@ -160,7 +148,7 @@ export default function ProjectModule() {
 
   const errorsHeaderMap: Record<string, string> = {
     test_name: "Name",
-    module_name: "Module",
+    component_name: "Component",
     status: "Error",
   };
 

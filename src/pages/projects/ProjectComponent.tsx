@@ -1,21 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import InfoBox from "../../components/InfoBox";
 import RadialChart from "../../components/RadialChart";
-import Table, { type Column } from "../../components/Table";
+import Table from "../../components/Table";
 import TextArea from "../../components/TextArea";
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import authService from "../../services/auth";
 
-type TestRow = {
-  name: string;
-  dateOfRun: string;
-  runBy: string;
-  status: string;
-};
-
 export default function ProjectComponent() {
-  const { id: rawProjectId, regressionId, moduleId, componentId } = useParams<{
+  const {
+    id: rawProjectId,
+    regressionId,
+    moduleId,
+    componentId,
+  } = useParams<{
     id: string;
     regressionId: string;
     moduleId: string;
@@ -24,6 +22,10 @@ export default function ProjectComponent() {
   const projectId = rawProjectId?.trim();
   const [projectName, setProjectName] = useState("Loading...");
   const [currentPage, setCurrentPage] = useState(1);
+  const [component, setComponent] = useState<any>("");
+  const [errors, setErrors] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [logs, setLogs] = useState<string>("");
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -33,7 +35,9 @@ export default function ProjectComponent() {
       }
 
       try {
-        const response = await authService.makeAuthenticatedRequest(`/api/projects/${projectId}`);
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/projects/${projectId}`
+        );
         if (!response.ok) throw new Error("Failed to fetch project");
         const data = await response.json();
         setProjectName(data.project_name || "Project");
@@ -45,21 +49,116 @@ export default function ProjectComponent() {
     fetchProject();
   }, [projectId]);
 
-  const columns: Column<TestRow>[] = [
-    { key: "name", header: "Test Name", accessor: "name" },
-    { key: "dateOfRun", header: "Date of Run", accessor: "dateOfRun" },
-    { key: "runBy", header: "Run By", accessor: "runBy" },
-    { key: "status", header: "Status", accessor: "status" },
-  ];
+  useEffect(() => {
+    const fetchComponent = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}/module/${moduleId}/component/${componentId}`
+        );
+        const data = await response.json();
 
-  const data: TestRow[] = [
-    { name: "Test 1", dateOfRun: "2025-05-20", runBy: "Alice", status: "Passed" },
-    { name: "Test 2", dateOfRun: "2025-05-18", runBy: "Bob", status: "Failed" },
-    { name: "Test 3", dateOfRun: "2025-05-15", runBy: "Charlie", status: "Passed" },
-    { name: "Test 4", dateOfRun: "2025-05-10", runBy: "Dana", status: "Skipped" },
-    { name: "Test 5", dateOfRun: "2025-05-10", runBy: "Dana", status: "Skipped" },
-    { name: "Test 6", dateOfRun: "2025-05-10", runBy: "Dana", status: "Skipped" },
-    { name: "Test 7", dateOfRun: "2025-05-10", runBy: "Dana", status: "Skipped" },
+        const date = new Date(data.execution_date);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+        data.execution_date = formattedDate;
+
+        setComponent(data);
+      } catch (err) {
+        setComponent("");
+      }
+    };
+
+    const fetchErrors = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}/module/${moduleId}/component/${componentId}/errors`
+        );
+        const errors = await response.json();
+
+        setErrors(errors);
+      } catch (err) {
+        setErrors([]);
+      }
+    };
+
+    const fetchHistory = async () => {
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}/module/${moduleId}/component/${componentId}/history`
+        );
+        const history = await response.json();
+
+        const cleanedData = history.map((row: any) => {
+          const date = new Date(row.execution_date);
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, "0");
+          const dd = String(date.getDate()).padStart(2, "0");
+          const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+          return {
+            ...row,
+            execution_date: formattedDate,
+          };
+        });
+
+        setHistory(cleanedData);
+      } catch (err) {
+        setHistory([]);
+      }
+    };
+
+    fetchComponent();
+    fetchErrors();
+    fetchHistory();
+  }, [componentId]);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      if (!component.component_name) return;
+
+      try {
+        const response = await authService.makeAuthenticatedRequest(
+          `/api/regression/${regressionId}/module/${moduleId}/component/${componentId}/logs?name=${encodeURIComponent(
+            component.component_name
+          )}`
+        );
+
+        const logText = await response.text();
+        setLogs(logText);
+      } catch (err) {
+        setLogs("Failed to load logs.");
+      }
+    };
+
+    fetchLogs();
+  }, [component.component_name]);
+
+  const historyHeaderMap: Record<string, string> = {
+    test_name: "Test Name",
+    execution_date: "Date Of Run",
+    name: "Run By",
+    status: "Status",
+  };
+
+  const historyColumns = useMemo(() => {
+    if (history.length === 0) return [];
+
+    const dynamicColumns = Object.keys(history[0]).map((key) => ({
+      key,
+      header: historyHeaderMap[key],
+      accessor: key,
+    }));
+
+    return dynamicColumns;
+  }, [history]);
+
+  const outcomeTotals = [
+    history.reduce((sum, r) => sum + (r.status == "PASS" ? 1 : 0 || 0), 0),
+    history.reduce((sum, r) => sum + (r.status == "FAIL" ? 1 : 0 || 0), 0),
+    history.reduce((sum, r) => sum + (r.status == "UNKNOWN" ? 1 : 0 || 0), 0),
   ];
 
   return (
@@ -81,7 +180,10 @@ export default function ProjectComponent() {
           <ol role="list" className="flex items-center space-x-4">
             <li>
               <div className="flex">
-                <Link to={`/projects/${projectId}`} className="text-sm font-medium text-gray-400 hover:text-gray-200">
+                <Link
+                  to={`/projects/${projectId}`}
+                  className="text-sm font-medium text-gray-400 hover:text-gray-200"
+                >
                   {projectName}
                 </Link>
               </div>
@@ -90,7 +192,10 @@ export default function ProjectComponent() {
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="size-5 shrink-0 text-gray-500" />
-                <Link to={`/projects/${projectId}/regression/${regressionId}`} className="ml-4 text-sm font-medium text-gray-400 hover:text-gray-200">
+                <Link
+                  to={`/projects/${projectId}/regression/${regressionId}`}
+                  className="ml-4 text-sm font-medium text-gray-400 hover:text-gray-200"
+                >
                   Regression #{regressionId}
                 </Link>
               </div>
@@ -99,7 +204,10 @@ export default function ProjectComponent() {
             <li>
               <div className="flex items-center">
                 <ChevronRightIcon className="size-5 shrink-0 text-gray-500" />
-                <Link to={`/projects/${projectId}/regression/${regressionId}/module/${moduleId}`} className="ml-4 text-sm font-medium text-gray-400 hover:text-gray-200">
+                <Link
+                  to={`/projects/${projectId}/regression/${regressionId}/module/${moduleId}`}
+                  className="ml-4 text-sm font-medium text-gray-400 hover:text-gray-200"
+                >
                   Module #{moduleId}
                 </Link>
               </div>
@@ -122,11 +230,11 @@ export default function ProjectComponent() {
           <InfoBox
             title="Component Information"
             rows={[
-              { label: "Name", value: "Login API Test" },
-              { label: "Component", value: "Backend API" },
-              { label: "Regression Run", value: "2025-03-15 10:32" },
-              { label: "Executed By", value: "Alice Johnson" },
-              { label: "Status", value: "Failed" },
+              { label: "Name", value: component.test_name },
+              { label: "Component", value: component.component_name },
+              { label: "Regression Run", value: component.execution_date },
+              { label: "Executed By", value: component.name },
+              { label: "Status", value: component.status },
             ]}
             buttonText="Rerun Component"
             onButtonClick={() => alert("Running Component...")}
@@ -135,7 +243,11 @@ export default function ProjectComponent() {
         <div className="w-full lg:w-3/5">
           <TextArea
             title="Error Message"
-            content={`{\n"error": "Invalid credentials. Expected 200 OK but received 401 Unauthorized."\n}`}
+            content={
+              errors && errors.length > 0
+                ? errors.map((e) => `• ${e.error_message}`).join("\n")
+                : "No Errors!"
+            }
           />
         </div>
       </div>
@@ -143,55 +255,35 @@ export default function ProjectComponent() {
       <div className="m-auto flex flex-col lg:flex-row gap-4">
         <div className="w-full lg:w-2/3">
           <div className="m-auto p-6 rounded-2xl bg-gray-900 lg:h-full">
-            <h2 className="text-lg font-semibold text-white mb-4">Test History & Previous Runs</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Test History & Previous Runs
+            </h2>
             <Table
-              columns={columns}
-              data={data.slice((currentPage - 1) * 6, currentPage * 6)}
+              columns={historyColumns}
+              data={history.slice((currentPage - 1) * 5, currentPage * 5)}
               currentPage={currentPage}
-              totalItems={data.length}
-              pageSize={6}
+              totalItems={history.length}
+              pageSize={5}
               onPageChange={setCurrentPage}
             />
           </div>
         </div>
 
         <div className="w-full lg:w-1/3">
-          <RadialChart
-            title="Test's History & Previous Runs"
-            series={[50, 40, 10]}
-            labels={["Passed", "Failed", "Unknown"]}
-          />
+          {history.length > 0 ? (
+            <RadialChart
+              title="Test's History & Previous Runs"
+              series={outcomeTotals}
+              labels={["Passed", "Failed", "Unknown"]}
+            />
+          ) : (
+            <div className="text-gray-400">Loading chart data...</div>
+          )}
         </div>
       </div>
 
       <div className="m-auto mt-6">
-        <TextArea
-          title="Log File"
-          content={`2025-03-15 10:32:00 [INFO] User login attempt started
-2025-03-15 10:32:05 [INFO] Request received: POST /login
-2025-03-15 10:32:05 [INFO] Request data: {"username": "john_doe", "password": "password123"}
-2025-03-15 10:32:06 [DEBUG] Request headers: {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-2025-03-15 10:32:06 [DEBUG] Validating credentials for user john_doe
-2025-03-15 10:32:06 [ERROR] Invalid credentials. Expected 200 OK but received 401 Unauthorized.
-2025-03-15 10:32:06 [ERROR] Failed login attempt for user john_doe
-2025-03-15 10:32:06 [INFO] Request URL: /login
-2025-03-15 10:32:06 [INFO] Status Code: 401
-2025-03-15 10:32:06 [INFO] Expected Code: 200
-2025-03-15 10:32:06 [INFO] User IP: 192.168.1.10
-2025-03-15 10:32:06 [INFO] User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
-2025-03-15 10:32:06 [INFO] Session ID: abc123456789
-2025-03-15 10:32:07 [INFO] Checking lockout policy for user john_doe
-2025-03-15 10:32:07 [INFO] Lockout policy: No action triggered
-2025-03-15 10:32:07 [DEBUG] Logging failed login event for john_doe
-2025-03-15 10:32:07 [INFO] Failed login event logged
-2025-03-15 10:32:08 [INFO] Redirecting user john_doe to /login
-2025-03-15 10:32:08 [INFO] User john_doe redirected to /login
-2025-03-15 10:32:12 [INFO] User login attempt started
-2025-03-15 10:32:15 [INFO] Request received: POST /login
-2025-03-15 10:32:16 [ERROR] Invalid credentials. Expected 200 OK but received 401 Unauthorized.
-2025-03-15 10:32:16 [ERROR] Failed login attempt for user john_doe
-2025-03-15 10:32:16 [INFO] Request URL: /login`}
-        />
+        <TextArea title="Log File" content={logs ? logs : "No Data Found!"} />
       </div>
     </div>
   );

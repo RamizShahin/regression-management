@@ -39,13 +39,23 @@ router.get("/:regressionId/modules", verifyToken, async (req, res) => {
   try {
     const [result] = await db.query(
       `
-        SELECT m.module_id, m.module_name, COUNT(c.component_id) AS ComponentCount, MAX(rr.execution_date) AS LastRegressionDate
-        FROM modules m
-        LEFT JOIN components c ON c.module_id = m.module_id
-        LEFT JOIN test_cases tc ON tc.component_id = c.component_id
-        LEFT JOIN regression_runs rr ON tc.run_id = rr.run_id
-        WHERE rr.run_id = ?
-        GROUP BY m.module_id, m.module_name
+        SELECT 
+        m.module_id,
+        m.module_name,
+        COUNT(DISTINCT CASE WHEN rr1.run_id = ? THEN c.component_id END) AS ComponentCount,
+        (
+          SELECT MAX(rr2.execution_date)
+          FROM test_cases tc2
+          JOIN components c2 ON c2.component_id = tc2.component_id
+          JOIN regression_runs rr2 ON rr2.run_id = tc2.run_id
+          WHERE c2.module_id = m.module_id
+        ) AS LastRegressionDate
+      FROM modules m
+      LEFT JOIN components c ON c.module_id = m.module_id
+      LEFT JOIN test_cases tc ON tc.component_id = c.component_id
+      LEFT JOIN regression_runs rr1 ON rr1.run_id = tc.run_id
+      GROUP BY m.module_id, m.module_name
+
     `,
       [regressionId]
     );

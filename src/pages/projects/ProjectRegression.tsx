@@ -101,8 +101,8 @@ export default function ProjectRegression() {
       }
     };
 
-    fetchErrors();
     fetchRegression();
+    fetchErrors();
     fetchModules();
   }, [projectId, regressionId]);
 
@@ -150,6 +150,8 @@ export default function ProjectRegression() {
     regression.failed || 0,
     regression.unknown || 0,
   ];
+
+  // console.log(regression);
 
   return (
     <div className="p-6">

@@ -25,10 +25,10 @@ router.post("/", upload.array("logs"), async (req, res) => {
     // Save metadata to DB
     const [result] = await db.query(
       `
-        INSERT INTO regression_runs (project_id, execution_date, total_tests, passed, failed, unknown)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO regression_runs (project_id, execution_date, total_tests, passed, failed, unknown, run_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
-      [projectId, runDate, 0, 0, 0, 0]
+      [projectId, runDate, 0, 0, 0, 0, regressionName]
     );
 
     const newId = result.insertId;

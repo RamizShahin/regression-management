@@ -47,6 +47,11 @@ const RadialChart: React.FC<RadialChartProps> = ({
   const percentages =
     total > 0 ? series.map((val) => (val / total) * 100) : series.map(() => 0);
 
+  const formatter = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  });
+
   const options: ApexOptions = {
     series,
     labels,
@@ -75,7 +80,8 @@ const RadialChart: React.FC<RadialChartProps> = ({
             show: true,
             fontSize: "16px",
             color: "#ffffff",
-            formatter: (val: number) => `${val}%`,
+            formatter: (val) =>
+              isFinite(val) ? `${formatter.format(val)}%` : "",
           },
         },
         hollow: {

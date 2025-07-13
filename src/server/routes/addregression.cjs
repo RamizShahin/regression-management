@@ -43,7 +43,7 @@ router.post("/", upload.array("logs"), async (req, res) => {
     }
 
     // Trigger Python parser with folder + metadata
-    const process = spawn("python", [
+    const process = spawn("python3", [
       "parser/main.py",
       "--plugin",
       "plugin2",
@@ -55,6 +55,10 @@ router.post("/", upload.array("logs"), async (req, res) => {
 
     process.stdout.on("data", (data) => {
       console.log(`PYTHON OUT: ${data}`);
+      return res.status(200).json({
+	message: "Regression run started successfully",
+	runId: newId,
+      });
     });
 
     // process.stderr.on("data", (data) => {

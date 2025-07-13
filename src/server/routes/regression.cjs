@@ -54,10 +54,11 @@ router.get("/:regressionId/modules", verifyToken, async (req, res) => {
       LEFT JOIN components c ON c.module_id = m.module_id
       LEFT JOIN test_cases tc ON tc.component_id = c.component_id
       LEFT JOIN regression_runs rr1 ON rr1.run_id = tc.run_id
+      WHERE rr1.run_id = ?
       GROUP BY m.module_id, m.module_name
 
     `,
-      [regressionId]
+      [regressionId, regressionId]
     );
     res.json(result);
   } catch (error) {

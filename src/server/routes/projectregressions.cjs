@@ -14,6 +14,8 @@ router.get("/project/:projectId", verifyToken, async (req, res) => {
     res.json(regressions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch regressions" });
+  } finally {
+    connection.release();
   }
 });
 
@@ -28,6 +30,8 @@ router.get("/project/:projectId/team", verifyToken, async (req, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch team members" });
+  } finally {
+    connection.release();
   }
 });
 

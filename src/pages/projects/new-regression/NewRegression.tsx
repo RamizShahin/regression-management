@@ -42,6 +42,9 @@ const NewRegressionRun: React.FC = () => {
 
       const result = await response.json();
       console.log("Upload result:", result);
+      if (response.status == 200) {
+        alert("Parsing started successfully");
+      }
     } catch (error) {
       console.error("Upload failed:", error);
     }
@@ -58,11 +61,18 @@ const NewRegressionRun: React.FC = () => {
           Go Back
         </button>
 
-        <h1 className="text-2xl font-bold mb-6 text-white">Add New Regression Run</h1>
+        <h1 className="text-2xl font-bold mb-6 text-white">
+          Add New Regression Run
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="regressionName" className="block mb-1 text-gray-300">Regression Name</label>
+            <label
+              htmlFor="regressionName"
+              className="block mb-1 text-gray-300"
+            >
+              Regression Name
+            </label>
             <input
               type="text"
               id="regressionName"
@@ -74,7 +84,9 @@ const NewRegressionRun: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="plugin" className="block mb-1 text-gray-300">Select Plugin</label>
+            <label htmlFor="plugin" className="block mb-1 text-gray-300">
+              Select Plugin
+            </label>
             <select
               id="plugin"
               value={plugin}
@@ -90,7 +102,9 @@ const NewRegressionRun: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="runDate" className="block mb-1 text-gray-300">Run Date</label>
+            <label htmlFor="runDate" className="block mb-1 text-gray-300">
+              Run Date
+            </label>
             <input
               type="date"
               id="runDate"
@@ -102,7 +116,12 @@ const NewRegressionRun: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="uploadLogFolder" className="block mb-1 text-gray-300">Upload Log Folder</label>
+            <label
+              htmlFor="uploadLogFolder"
+              className="block mb-1 text-gray-300"
+            >
+              Upload Log Folder
+            </label>
             {/* @ts-ignore */}
             <input
               type="file"
